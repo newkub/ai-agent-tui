@@ -4,17 +4,15 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bun run tsc",
-    "dev": "bun run tsc --watch",
-    "test": "bun test"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.2",
-    "bun-types": "^1.2.5"
+    "build": "bun run build",
+    "test": "bun run test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.0",
     "anthropic": "^0.0.0",
+    "deepinfra": "^2.0.2",
     "openai": "^4.86.2"
-  }
+  },
+  "devDependencies": {}
 }
