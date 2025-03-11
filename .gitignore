@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+logs/
+*.log
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Bun specific
+.bun.lockb
+
+# Miscellaneous
+.DS_Store
+# Turborepo
+.turbo

@@ -1,0 +1,17 @@
+{
+  "name": "agent",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "bun run ./src/index.ts --watch",
+    "build": "bun run ./src/index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "node-fzf": "^0.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}
