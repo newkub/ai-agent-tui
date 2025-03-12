@@ -1,5 +1,5 @@
 {
-  "name": "tui",
+  "name": "@newkub/tui",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/core/index.js",

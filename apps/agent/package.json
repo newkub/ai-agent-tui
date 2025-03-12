@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "build": "bun build ./src/index.ts && bun run scripts/generate-config.ts",
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "test": "bun test",
     "bun": "bun start"
   },
   "dependencies": {
+    "@newkub/ai": "workspace:*",
     "@clack/prompts": "^0.10.0",
-    "@poppinss/cliui": "6.4.2",
+    "@poppinss/cliui": "6.4.3",
     "node-fzf": "^0.13.1"
   },
   "devDependencies": {

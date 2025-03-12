@@ -1,10 +1,10 @@
 import { intro, outro, text, isCancel, cancel } from '@clack/prompts';
-import { suggestVersion } from '../lib/ai/src';
-import { getLatestTag, createRelease } from '../lib/git';
-import type { CommandHandler, CommandResponse } from '../types/command';
+import { suggestVersion } from '@newkub/ai';
+import { getLatestTag, createRelease } from '@newkub/git';
+import type { CommandHandler } from '../types/command';
 
 const release: CommandHandler = async () => {
-  intro('Git AI Release Assistant');
+  intro('Git AI Release Assistant');    
 
   const currentVersion = await getLatestTag();
   const suggestedVersion = await suggestVersion(currentVersion);

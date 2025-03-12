@@ -1,12 +1,12 @@
 {
-  "name": "@lib/ai",
+  "name": "@newkub/ai",
   "version": "1.0.0",
   "description": "Unified interface for AI providers",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
     "start:cli": "bun run examples/cli/index.ts",
-    "build": "bun build ./src/index.ts --outdir ./dist",
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "prepublishOnly": "bun run build && bun run start",
     "release": "release-it"
   },

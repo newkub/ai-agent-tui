@@ -48,6 +48,8 @@
     "LICENSE"
   ],
   "dependencies": {
+    "@newkub/git": "workspace:*",   
+    "@newkub/ai": "workspace:*",
     "@anthropic-ai/sdk": "^0.39.0",
     "@biomejs/biome": "^1.9.4",
     "@clack/prompts": "^0.10.0",
@@ -60,7 +62,6 @@
   "devDependencies": {
     "@types/node": "22.13.10",
     "node-fzf": "^0.13.1",
-    "prettier": "^3.5.3",
     "release-it": "^18.1.2",
     "typescript": "^5.8.2"
   }

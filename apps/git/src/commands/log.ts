@@ -1,6 +1,6 @@
 import { intro, outro } from '@clack/prompts';
-import { getCommits } from '../lib/git';
-import type { CommandHandler, CommandResponse } from '../types/command';
+import { getCommits } from '@newkub/git';
+import type { CommandHandler } from '../types/command';
 
 const log: CommandHandler = async () => {
   intro('Git AI Log Viewer');

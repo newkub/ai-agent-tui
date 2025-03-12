@@ -1,7 +1,7 @@
 import { intro, outro, text, isCancel, cancel } from '@clack/prompts';
-import { generateCommitMessage } from '../lib/ai/src';
-import { getCurrentBranch, getStagedFiles, createCommit } from '../lib/git';
-import type { CommandHandler, CommandResponse } from '../types/command';
+import { generateCommitMessage } from '@newkub/ai';
+import { getCurrentBranch, getStagedFiles, createCommit } from '@newkub/git';
+import type { CommandHandler } from '../types/command';
 
 const commit: CommandHandler = async () => {
   intro('Git AI Commit Assistant');

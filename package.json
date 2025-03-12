@@ -11,14 +11,14 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "dev": "bun run app/agent/index.ts --watch",
+    "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "start": "turbo run build && tsc",
-    "tsc": "tsc --noEmit",
-    "biome": "biome check .",
-    "biome:fix": "biome check --apply .",
-    "release": "release-it"
+    "tsc": "turbo run tsc --noEmit",
+    "biome": "turbo run biome",
+    "biome:fix": "turbo run biome:fix",
+    "release": "turbo run release-it"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

@@ -1,5 +1,5 @@
 {
-  "name": "@cli/git",
+  "name": "@newkub/git",
   "version": "1.0.0",
   "description": "Utilities for interacting with Git repositories",
   "main": "dist/index.js",

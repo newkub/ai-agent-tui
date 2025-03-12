@@ -7,19 +7,26 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build", "type-check"],
-      "outputs": ["dist/**", "build/**", "*.tsbuildinfo"]
+      "outputs": ["dist/**", "build/**", "*.tsbuildinfo"],
+      "cache": true
     },
     "type-check": {
-      "outputs": []
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "cache": true
     },
     "lint": {
-      "outputs": []
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true
     },
     "dev": {
+      "dependsOn": ["build"],
       "cache": false
     },
     "clean": {
