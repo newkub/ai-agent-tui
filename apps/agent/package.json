@@ -10,10 +10,10 @@
     "bun": "bun start"
   },
   "dependencies": {
-    "@newkub/ai": "workspace:*",
     "@clack/prompts": "^0.10.0",
     "@poppinss/cliui": "6.4.3",
-    "node-fzf": "^0.13.1"
+    "node-fzf": "^0.13.1",
+    "@newkub/ai": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
