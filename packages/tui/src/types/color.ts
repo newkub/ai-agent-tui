@@ -1,17 +1,9 @@
-export interface RGB {
-  r: number;
-  g: number;
-  b: number;
-}
+type ColorOptions = {
+  color?: 'red' | 'green' | 'blue' | 'yellow' | 'magenta' | 'cyan' | 'white' | 'gray';
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  dim?: boolean;
+};
 
-export interface HEX {
-  hex: string;
-}
-
-export interface HSL {
-  h: number;
-  s: number;
-  l: number;
-}
-
-export type Color = RGB | HEX | HSL;
+export type { ColorOptions };

@@ -1,20 +1,22 @@
 {
-  "name": "prompts",
+  "name": "tui",
   "version": "1.0.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/core/index.js",
+  "types": "dist/core/index.d.ts",
   "scripts": {
-    "build": "bun run build",
-    "dev": "tsc -w",
-    "test": "bun run test",
-    "example": "bun run example.ts"
+    "start": "bun run ./src/core/index.ts",
+    "build": "bun build ./src/core/index.ts --outdir ./dist/core --target node",
+    "dev": "bun --watch run ./src/core/index.ts",
+    "test": "bun test",
+    "release": "release-it"
   },
   "devDependencies": {
     "typescript": "^5.8.2",
-    "@types/node": "22.13.10"
+    "release-it": "^18.1.2",
+    "bun-types": "latest"
   },
   "dependencies": {
-    "chalk": "^5.4.1"
+    "picocolors": "^1.1.1"
   }
 }

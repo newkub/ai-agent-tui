@@ -1,18 +1,13 @@
-export interface TableColumn<T = unknown> {
+export interface TableOptions {
+  padding?: number;
+  border?: boolean;
+  headerColor?: string;
+  rowColor?: string;
+}
+
+export interface TableColumn {
   key: string;
-  label: string;
+  header: string;
   width?: number;
   align?: 'left' | 'center' | 'right';
-  render?: (value: T) => string;
-}
-
-export interface TableRow<T = unknown> {
-  [key: string]: T;
-}
-
-export interface TableConfig<T = unknown> {
-  columns: TableColumn<T>[];
-  rows: TableRow<T>[];
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
 }

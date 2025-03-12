@@ -1,11 +1,12 @@
-export interface CommandStep {
+export type CommandStep = {
   command: string;
-  args?: string[];
-  validate?: (output: string) => boolean | string;
-}
+  args: string[];
+};
 
-export interface Instruction {
+export type Instruction = {
   steps: CommandStep[];
   description: string;
   validate?: (output: string) => boolean | string;
-}
+};
+
+export type CreatePromptFunction = (steps: CommandStep[]) => Instruction;

@@ -7,6 +7,5 @@ export interface LogEntry {
 
 export interface LoggerConfig {
   level: 'debug' | 'info' | 'warn' | 'error';
-  format: 'json' | 'text';
-  timestampFormat?: string;
+  format?: 'json' | 'text';
 }
