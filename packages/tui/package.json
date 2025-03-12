@@ -1,15 +1,20 @@
 {
-  "name": "@cli/tui",
+  "name": "prompts",
   "version": "1.0.0",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bun run tsc",
-    "dev": "bun run tsc --watch",
-    "publish": "npm publish --access public"
+    "build": "bun run build",
+    "dev": "tsc -w",
+    "test": "bun run test",
+    "example": "bun run example.ts"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.8.2",
+    "@types/node": "22.13.10"
   },
-  "type": "module"
+  "dependencies": {
+    "chalk": "^5.4.1"
+  }
 }
