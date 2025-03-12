@@ -1,0 +1,67 @@
+{
+  "name": "git-ai-assistant",
+  "version": "0.1.12",
+  "description": "AI-powered git commit message generator using Clack prompt",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "gaa": "./dist/index.js",
+    "git-ai-assistance": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node",
+    "start": "bun run build && bun dist/index.js",
+    "dev": "bun tsc --noEmit --watch",
+    "biome": "biome check .",
+    "biome:fix": "biome check --apply .",
+    "release": "release-it",
+    "postinstall": "bun scripts/generate-config.ts && bun start"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "openai",
+    "deepseek",
+    "anthropic",
+    "clack",
+    "cli",
+    "developer-tools"
+  ],
+  "author": "newkub",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/newkub/git-aicommit.git"
+  },
+  "homepage": "https://github.com/newkub/git-aicommit#readme",
+  "bugs": {
+    "url": "https://github.com/newkub/git-aicommit/issues"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/newkub"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@biomejs/biome": "^1.9.4",
+    "@clack/prompts": "^0.10.0",
+    "@poppinss/cliui": "^6.4.3",
+    "cliui": "^8.0.1",
+    "openai": "^4.87.3",
+    "picocolors": "^1.1.1",
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.10",
+    "node-fzf": "^0.13.1",
+    "prettier": "^3.5.3",
+    "release-it": "^18.1.2",
+    "typescript": "^5.8.2"
+  }
+}

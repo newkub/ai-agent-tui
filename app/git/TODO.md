@@ -1,0 +1,3 @@
+- Configure language of clack prompt
+- git tui
+- github interactive
