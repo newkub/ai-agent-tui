@@ -12,6 +12,6 @@
     "isolatedModules": true,
     "outDir": "./dist",
   },
-  "include": ["src/**/*"],
+  "include": ["packages/*/*", "apps/*/*"],
   "exclude": ["node_modules", "dist"]
 }
