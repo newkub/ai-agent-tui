@@ -6,7 +6,7 @@
   "private": true,
   "packageManager": "bun@1.2.5",
   "workspaces": [
-    "app/*",
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
@@ -17,20 +17,16 @@
     "start": "turbo run build && tsc",
     "tsc": "tsc --noEmit",
     "biome": "biome check .",
-    "biome:fix": "biome check --apply ."
-  },
-  "dependencies": {
-    "@clack/prompts": "^0.10.0",
-    "@poppinss/cliui": "6.4.2",
-    "cliui": "^8.0.1"
+    "biome:fix": "biome check --apply .",
+    "release": "release-it"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.13.10",
     "bun-types": "latest",
-    "git-ai-assistant": "^0.1.6",
+    "git-ai-assistant": "^0.1.12",
+    "release-it": "^18.1.2",
     "turbo": "2.4.4",
-    "turbopack": "^0.0.1",
     "typescript": "^5.8.2"
   }
 }

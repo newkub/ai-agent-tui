@@ -6,8 +6,11 @@
   },
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": ["^build", "type-check"],
+      "outputs": ["dist/**", "build/**", "*.tsbuildinfo"]
+    },
+    "type-check": {
+      "outputs": []
     },
     "test": {
       "dependsOn": ["^build"],
@@ -18,6 +21,9 @@
     },
     "dev": {
       "cache": false
+    },
+    "clean": {
+      "outputs": ["dist", "build", "*.tsbuildinfo"]
     }
   }
 }
