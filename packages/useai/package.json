@@ -1,10 +1,19 @@
 {
   "name": "useai",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "type": "module",
   "scripts": {
-    "build": "bun run build",
+    "dev": "bun dev ./src/index.ts",
+    "build": "bun build ./src/index.ts && bun run scripts/generate-config.ts",
     "test": "bun run test"
   },
   "dependencies": {
@@ -14,5 +23,7 @@
     "deepinfra": "^2.0.2",
     "openai": "^4.86.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "bun-types": "latest"
+  }
 }

@@ -1,29 +1,20 @@
 import { createOpenAIProvider } from './openai';
 import { createAnthropicProvider } from './anthropic';
 import { createGeminiProvider } from './gemini';
-import type { Provider } from '../types/providers';
+import type { ChatProvider } from '../types/providers';
 
-const providerMap = {
-  openai: (message: string) => {
-    const provider = createOpenAIProvider(process.env.OPENAI_API_KEY || '');
-    return provider(message);
-  },
-  anthropic: (message: string) => {
-    const provider = createAnthropicProvider(process.env.ANTHROPIC_API_KEY || '');
-    return provider(message);
-  },
-  gemini: (message: string) => {
-    const provider = createGeminiProvider(process.env.GEMINI_API_KEY || '');
-    return provider(message);
-  }
+const providers: Record<string, ChatProvider> = {
+  openai: createOpenAIProvider(process.env.OPENAI_API_KEY || ''),
+  anthropic: createAnthropicProvider(process.env.ANTHROPIC_API_KEY || ''),
+  gemini: createGeminiProvider(process.env.GEMINI_API_KEY || '')
 };
 
-export const chat = async (provider: Provider, message: string): Promise<string | undefined> => {
-  const providerFunction = providerMap[provider];
+export const chat = async (provider: keyof typeof providers, message: string): Promise<string | undefined> => {
+  const providerFunction = providers[provider];
   
   if (!providerFunction) {
     throw new Error(`Unsupported provider: ${provider}`);
   }
   
-  return providerFunction(message);
+  return providerFunction.chat([{ role: 'user', content: message }]);
 };
