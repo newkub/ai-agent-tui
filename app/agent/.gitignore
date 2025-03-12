@@ -1,0 +1,25 @@
+# Bun
+.bun.lockb
+bun.lockb
+.turbo
+
+# Node.js
+node_modules
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# TypeScript
+dist
+build
+.tsbuildinfo
+
+# Editors/IDEs
+.vscode
+.idea
+
+# System
+.DS_Store
+Thumbs.db

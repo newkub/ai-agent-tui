@@ -2,16 +2,19 @@
   "name": "agent",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
-    "dev": "bun run ./src/index.ts --watch",
-    "build": "bun run ./src/index.ts",
+    "start": "bun run ./src/index.ts",
+    "build": "bun build ./src/index.ts && bun run scripts/generate-config.ts",
     "test": "bun test"
   },
   "dependencies": {
+    "@clack/prompts": "^0.10.0",
     "node-fzf": "^0.13.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
+    "bun-types": "latest",
     "typescript": "^5.8.2"
   }
 }
