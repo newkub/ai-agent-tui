@@ -4,7 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -14,7 +14,8 @@
     "allowJs": true,
     "declaration": true,
     "noEmit": false,
-    "types": ["bun-types"]
+    "types": ["bun-types"],
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*.ts", "**/*.ts"],
   "exclude": ["node_modules", "dist"]
