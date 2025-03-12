@@ -94,6 +94,19 @@
         "typescript": "^5.8.2",
       },
     },
+    "packages/git": {
+      "name": "@cli/git",
+      "version": "1.0.0",
+      "dependencies": {
+        "@poppinss/cliui": "^6.4.3",
+        "picocolors": "^1.1.1",
+      },
+      "devDependencies": {
+        "bun-types": "latest",
+        "release-it": "^18.1.2",
+        "typescript": "^5.8.2",
+      },
+    },
     "packages/tui": {
       "name": "prompts",
       "version": "1.0.0",
@@ -136,6 +149,8 @@
     "@clack/core": ["@clack/core@0.4.1", "", { "dependencies": { "picocolors": "^1.0.0", "sisteransi": "^1.0.5" } }, "sha512-Pxhij4UXg8KSr7rPek6Zowm+5M22rbd2g1nfojHJkxp5YkFqiZ2+YLEM/XGVIzvGOcM0nqjIFxrpDwWRZYWYjA=="],
 
     "@clack/prompts": ["@clack/prompts@0.10.0", "", { "dependencies": { "@clack/core": "0.4.1", "picocolors": "^1.0.0", "sisteransi": "^1.0.5" } }, "sha512-H3rCl6CwW1NdQt9rE3n373t7o5cthPv7yUoxF2ytZvyvlJv89C5RYMJu83Hed8ODgys5vpBU0GKxIRG83jd8NQ=="],
+
+    "@cli/git": ["@cli/git@workspace:packages/git"],
 
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
 
@@ -1482,6 +1497,8 @@
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
 
     "@anthropic-ai/sdk/@types/node": ["@types/node@18.19.80", "", { "dependencies": { "undici-types": "~5.26.4" } }, "sha512-kEWeMwMeIvxYkeg1gTc01awpwLbfMRZXdIhwRcakd/KlK53jmRC26LqcbIt7fnAQTu5GzlnWmzA3H6+l1u6xxQ=="],
+
+    "@cli/git/@poppinss/cliui": ["@poppinss/cliui@6.4.3", "", { "dependencies": { "@poppinss/colors": "^4.1.4", "cli-boxes": "^4.0.1", "cli-table3": "^0.6.5", "cli-truncate": "^4.0.0", "log-update": "^6.1.0", "pretty-hrtime": "^1.0.3", "string-width": "^7.2.0", "supports-color": "^10.0.0", "terminal-size": "^4.0.0", "wordwrap": "^1.0.0" } }, "sha512-flAHvbWHP4r7+DVcWMuO9EGnnkaZLJzkei6E4QTVhPsIAKBI78vDplhHXZofUvwG5IrU42QM0gX/pxMOKwQRvg=="],
 
     "@inquirer/checkbox/ansi-escapes": ["ansi-escapes@4.3.2", "", { "dependencies": { "type-fest": "^0.21.3" } }, "sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ=="],
 
