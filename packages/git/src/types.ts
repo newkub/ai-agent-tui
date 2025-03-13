@@ -60,6 +60,19 @@ export type GitCommandOptions = {
   force?: boolean;
 };
 
+// Changelog types
+export interface ChangelogOptions {
+  template: string;
+  includeTypes: string[];
+}
+
+export interface ChangelogEntry {
+  type: string;
+  message: string;
+  hash: string;
+  date: string;
+}
+
 // Git objects
 export type Commit = {
   hash: GitHash;

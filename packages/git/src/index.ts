@@ -4,15 +4,28 @@ import type {
   GitMessage,
   GitTag,
   GitCommandOptions,
-  Commit,
   GitStatus,
   ExecuteResult,
   GitCommandName,
   GitStatusFile,
   GitLogFormat,
   GitDateISO,
-  GitAuthor
+  GitAuthor,
+  ChangelogOptions,
+  ChangelogEntry
 } from './types';
+
+export type Commit = {
+  hash: string;
+  author: {
+    name: string;
+    email: string;
+  };
+  date: string;
+  message: string;
+  branch?: string;
+  tags?: string[];
+};
 
 const DEFAULT_LOG_FORMAT = 'medium' as GitLogFormat;
 
@@ -337,6 +350,20 @@ const getAuthor = async (options: GitCommandOptions = {}): Promise<ExecuteResult
   }
 };
 
+const generateChangelog = async (options: ChangelogOptions): Promise<ChangelogEntry[]> => {
+  const { includeTypes } = options;
+  const commits = await getCommits();
+
+  return commits
+    .filter(commit => includeTypes.some((type: string) => commit.message.startsWith(type)))
+    .map(commit => ({
+      type: commit.message.split(':')[0],
+      message: commit.message,
+      hash: commit.hash,
+      date: commit.date
+    }));
+};
+
 // Export all functions
 const init = async (options: GitCommandOptions = {}): Promise<ExecuteResult<boolean>> => {
   try {
@@ -394,14 +421,15 @@ export {
   getCommits,
   getCommitHistory,
   getLatestTag,
-  status,
   getStagedFiles,
-  getLogHistory,
-  getAuthor,
-  getConfig,
   createCommit,
   createRelease,
   push,
+  status,
+  generateChangelog,
+  getLogHistory,
+  getAuthor,
+  getConfig,
   getFileStatus,
   setConfig
 };
