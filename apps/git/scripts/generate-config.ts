@@ -1,4 +1,4 @@
-import { defaultConfig } from '../src/types/defineConfig';
+import { defaultConfig } from '../src/types/config/defineConfig';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
@@ -6,11 +6,11 @@ async function generateConfig() {
   try {
     const configString = JSON.stringify(defaultConfig, null, 2);
     
-    const configContent = `import { defineConfig } from './src/types/defineConfig';
+    const configContent = `import { defineConfig } from './src/types/config/defineConfig';
 
 export default defineConfig(${configString});`;
     
-    const configPath = join(process.env.HOME || process.env.USERPROFILE || '', '.git-assistance.config.ts');
+    const configPath = join(__dirname, '..', 'git-assistance.config.ts');
     
     await writeFile(configPath, configContent);
     console.log(`Config file generated successfully at: ${configPath}`);

@@ -7,14 +7,18 @@
     "strict": true,
     "skipLibCheck": true,
     "outDir": "dist",
-    "rootDir": "src",
     "declaration": true,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "emitDeclarationOnly": false,
-    "types": ["bun-types"]
+    "types": ["bun-types"],
+    "baseUrl": ".",
+    "rootDir": ".",
+    "paths": {
+      "@newkub/ai": ["../../packages/ai/src/index.ts"],
+      "@newkub/git": ["../../packages/git/src/index.ts"]
+    }
   },
-  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

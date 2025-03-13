@@ -45,4 +45,14 @@ function getDefaultProvider(): AIProvider {
   return getProvider(defaultProvider as ProviderParams);
 }
 
+export function generateCommitMessage(prompt: string): Promise<string> {
+  const provider = getDefaultProvider();
+  return provider.textgen(prompt);
+}
+
+export function suggestVersion(prompt: string): Promise<string> {
+  const provider = getDefaultProvider();
+  return provider.textgen(prompt);
+}
+
 export { providers, OpenAIProvider, DeepseekProvider, Anthropic };

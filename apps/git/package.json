@@ -1,5 +1,5 @@
 {
-  "name": "git-ai-assistant",
+  "name": "git",
   "version": "0.1.12",
   "description": "AI-powered git commit message generator using Clack prompt",
   "type": "module",
@@ -9,7 +9,7 @@
     "git-ai-assistance": "./dist/index.js"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target node",
+    "build": "bun build src/index.ts --outdir ./dist --target node",
     "start": "bun run build && bun dist/index.js",
     "dev": "bun tsc --noEmit --watch",
     "biome": "biome check .",
