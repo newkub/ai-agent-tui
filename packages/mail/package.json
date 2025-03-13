@@ -1,0 +1,22 @@
+{
+  "name": "@cli/mail",
+  "version": "1.0.0",
+  "description": "Mail package for CLI using Bun",
+  "main": "dist/index.js",
+  "packageManager": "bun@1.2.5",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun run build.ts",
+    "test": "bun test",
+    "dev": "bun run dev.ts"
+  },
+  "dependencies": {
+    "@types/nodemailer": "^6.4.17",
+    "nodemailer": "^6.10.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.8.2",
+    "unocss": "^66.1.0-beta.4"
+  }
+}
