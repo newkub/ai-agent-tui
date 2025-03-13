@@ -1,15 +1,15 @@
 // AI module index file
 
-import type { ProviderParams } from './types/provider-params';
+import type { ProviderParams, ImageGenerationResult } from './types/provider-params';
 import type { Capabilities } from './types/capabilities';
 import type { CapabilityParams } from './types/capability-params';
 import { OpenAIProvider } from './providers/openai';
 import { DeepseekProvider } from './providers/deepseek';
-import { Anthropic } from './providers/anthropic';
+import { AnthropicProvider } from './providers/anthropic';
 
 interface AIProvider {
   textgen(prompt: string): Promise<string>;
-  imagegen(prompt: string): Promise<string>;
+  imagegen(prompt: string): Promise<ImageGenerationResult>;
 }
 
 function providers(provider: ProviderParams): Capabilities {
@@ -20,7 +20,7 @@ function providers(provider: ProviderParams): Capabilities {
     },
     imagegen: (prompt: CapabilityParams['prompt']) => {
       const selectedProvider = provider ? getProvider(provider) : getDefaultProvider();
-      return selectedProvider.imagegen(prompt);
+      return selectedProvider.imagegen(prompt).then(result => result.url);
     }
   };
 
@@ -32,7 +32,7 @@ function getProvider(provider: 'openai' | 'anthropic' | 'deepseek'): AIProvider 
     case 'openai':
       return new OpenAIProvider();
     case 'anthropic':
-      return new Anthropic();
+      return new AnthropicProvider();
     case 'deepseek':
       return new DeepseekProvider();
     default:
@@ -55,4 +55,4 @@ export function suggestVersion(prompt: string): Promise<string> {
   return provider.textgen(prompt);
 }
 
-export { providers, OpenAIProvider, DeepseekProvider, Anthropic };
+export { providers, OpenAIProvider, DeepseekProvider, AnthropicProvider };

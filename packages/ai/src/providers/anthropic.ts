@@ -25,7 +25,7 @@ export class AnthropicProvider implements AIProvider {
         temperature: 0.7,
       });
 
-      if (!completion.content?.[0]?.text) {
+      if (!completion.content?.[0] || completion.content[0].type !== 'text') {
         throw new Error('Invalid response format from Anthropic API');
       }
       return completion.content[0].text.trim();
@@ -37,30 +37,13 @@ export class AnthropicProvider implements AIProvider {
 
   async imagegen(prompt: string): Promise<ImageGenerationResult> {
     try {
-      const response = await this.anthropic.images.generate({
-        model: 'claude-vision',
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-        response_format: 'url'
-      });
-
-      const imageUrl = response.data[0].url;
-      if (!imageUrl) {
-        throw new Error('No image URL returned from Anthropic');
-      }
-
-      return {
-        url: imageUrl,
-        width: 1024,
-        height: 1024,
-        format: 'png'
-      };
+      // Anthropic doesn't support native image generation
+      console.error('Image generation not supported by Anthropic');
+      throw new Error('Image generation not supported by Anthropic');
     } catch (error) {
       console.error('Anthropic Image Generation Error:', error);
-      throw new Error('Failed to generate image');
+      throw new Error('Failed to generate image: Image generation not supported by Anthropic');
     }
   }
 }
 export { Anthropic };
-
