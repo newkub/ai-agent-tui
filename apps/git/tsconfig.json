@@ -2,23 +2,24 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "dist",
     "declaration": true,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "emitDeclarationOnly": false,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
     "types": ["bun-types"],
-    "baseUrl": ".",
-    "rootDir": ".",
     "paths": {
       "@newkub/ai": ["../../packages/ai/src/index.ts"],
       "@newkub/git": ["../../packages/git/src/index.ts"]
     }
   },
+  "include": ["src/**/*", "scripts/checkConfig.ts"],
   "exclude": ["node_modules", "dist"]
 }

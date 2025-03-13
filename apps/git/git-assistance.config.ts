@@ -1,70 +1,36 @@
-import { defineConfig } from './src/types/config/defineConfig';
+import { defineConfig } from './src/types/defineConfig';
 
 export default defineConfig({
   "ai": {
     "modelConfiguration": {
       "defaultModel": "deepseek-chat",
       "fallbackChain": [
-        "deepseek-chat",
-        "gpt-4o",
-        "claude-3-sonnet"
+        "gpt-3.5-turbo",
+        "claude-3-haiku"
       ],
-      "models": {
-        "gpt-3.5-turbo": {
-          "apiKey": "",
+      "providers": [
+        {
+          "provider": "openai",
+          "model": "gpt-4",
           "temperature": 0.7,
           "maxTokens": 2048,
-          "timeout": 10000
+          "apiKey": ""
         },
-        "gpt-4": {
-          "apiKey": "",
+        {
+          "provider": "deepseek",
+          "model": "deepseek-chat",
           "temperature": 0.7,
           "maxTokens": 2048,
-          "timeout": 10000
+          "apiKey": ""
         },
-        "gpt-4-turbo": {
-          "apiKey": "",
+        {
+          "provider": "anthropic",
+          "model": "claude-3-sonnet",
           "temperature": 0.7,
           "maxTokens": 2048,
-          "timeout": 10000
-        },
-        "gpt-4o": {
-          "apiKey": "",
-          "temperature": 0.7,
-          "maxTokens": 2048,
-          "timeout": 10000
-        },
-        "deepseek-chat": {
-          "apiKey": "",
-          "temperature": 0.7,
-          "maxTokens": 2048,
-          "timeout": 10000
-        },
-        "deepseek-coder": {
-          "apiKey": "",
-          "temperature": 0.7,
-          "maxTokens": 2048,
-          "timeout": 10000
-        },
-        "claude-3-opus": {
-          "apiKey": "",
-          "temperature": 0.7,
-          "maxTokens": 2048,
-          "timeout": 10000
-        },
-        "claude-3-sonnet": {
-          "apiKey": "",
-          "temperature": 0.7,
-          "maxTokens": 2048,
-          "timeout": 10000
-        },
-        "claude-3-haiku": {
-          "apiKey": "",
-          "temperature": 0.7,
-          "maxTokens": 2048,
-          "timeout": 10000
+          "apiKey": ""
         }
-      }
+      ]
     },
     "languageConfiguration": {
       "language": "English"
@@ -78,26 +44,6 @@ export default defineConfig({
       "systemMessage": "You are a helpful assistant.",
       "responseFormat": "markdown",
       "maxRetry": 3
-    },
-    "providers": {
-      "openai": {
-        "model": "gpt-4",
-        "temperature": 0.7,
-        "maxTokens": 2048,
-        "apiKey": ""
-      },
-      "deepseek": {
-        "model": "deepseek-chat",
-        "temperature": 0.7,
-        "maxTokens": 2048,
-        "apiKey": ""
-      },
-      "anthropic": {
-        "model": "claude-3-sonnet",
-        "temperature": 0.7,
-        "maxTokens": 2048,
-        "apiKey": ""
-      }
     }
   },
   "commit": {
@@ -106,9 +52,7 @@ export default defineConfig({
       "branchName": true,
       "allowedBranches": [
         "main",
-        "develop",
-        "feature/*",
-        "hotfix/*"
+        "develop"
       ],
       "allowedTypes": [
         "feat",
@@ -120,13 +64,13 @@ export default defineConfig({
         "test",
         "chore"
       ],
-      "scopePattern": "[a-z]+(-[a-z]+)*"
+      "scopePattern": "[a-z]+([a-z-]+)?: .+$"
     },
     "automation": {
       "autoStage": true,
       "autoCommit": true,
       "autoPush": true,
-      "stagingMode": "ask"
+      "stagingMode": "auto"
     },
     "message": {
       "format": "conventional",
@@ -153,15 +97,16 @@ export default defineConfig({
       "preCommit": {
         "enable": true,
         "commands": [
-          "lint-staged"
+          "npm run lint",
+          "npm run test"
         ],
-        "timeout": 10000
+        "timeout": 30000
       },
       "commitMsg": {
         "enable": true,
-        "pattern": "^[A-Z]+-[0-9]+: .+",
+        "pattern": "^[a-z]+([a-z-]+)?: .+$",
         "commands": [],
-        "errorMessage": "Commit message must follow the pattern: JIRA-123: description"
+        "errorMessage": "Invalid commit message format"
       }
     },
     "branch": {
@@ -169,8 +114,8 @@ export default defineConfig({
         "main": {
           "protected": true,
           "requiredStatusChecks": [
-            "test",
-            "lint"
+            "lint",
+            "test"
           ],
           "requiredApprovals": 1,
           "allowForcePushes": false
@@ -178,7 +123,7 @@ export default defineConfig({
         "develop": {
           "autoMerge": "squash",
           "cleanupAfterMerge": true,
-          "maxStaleDays": 30
+          "maxStaleDays": 7
         }
       },
       "namingConvention": {
@@ -188,60 +133,46 @@ export default defineConfig({
     }
   },
   "release": {
-    "release": {
-      "versioning": {
-        "strategy": "semantic",
-        "preReleaseTag": "beta"
-      },
-      "changelog": {
-        "template": "standard",
-        "includeTypes": [
-          "feat",
-          "fix",
-          "perf"
-        ],
-        "excludeScopes": [
-          "docs",
-          "style"
-        ],
-        "autoGenerate": true
-      },
-      "notifications": {
-        "slack": "",
-        "email": [],
-        "webhook": ""
-      }
+    "versioning": {
+      "strategy": "semantic",
+      "preReleaseTag": "beta"
+    },
+    "changelog": {
+      "template": "standard",
+      "includeTypes": [
+        "feat",
+        "fix"
+      ],
+      "autoGenerate": true
+    },
+    "notifications": {
+      "slack": "https://hooks.slack.com/services/...",
+      "email": [
+        "team@example.com"
+      ]
     }
   },
   "security": {
-    "security": {
-      "secretScanning": {
-        "patterns": [
-          "apiKey",
-          "secret"
-        ],
-        "exclude": [
-          "node_modules"
-        ]
-      },
-      "encryption": {
-        "enable": false,
-        "keyFile": "",
-        "algorithm": "aes-256-cbc"
-      }
+    "secretScanning": {
+      "patterns": [
+        "API_KEY",
+        "SECRET_KEY"
+      ],
+      "exclude": [
+        "test/**"
+      ]
+    },
+    "encryption": {
+      "enable": true,
+      "keyFile": "encryption.key",
+      "algorithm": "aes-256-cbc"
     }
   },
   "experimental": {
-    "experimental": {
-      "features": {
-        "autoCodeReview": {
-          "enabled": false,
-          "description": "Automatically review code for best practices"
-        },
-        "autoFix": {
-          "enabled": false,
-          "description": "Automatically fix common code issues"
-        }
+    "features": {
+      "ai-code-review": {
+        "enabled": true,
+        "description": "Enable AI-powered code review"
       }
     }
   }
