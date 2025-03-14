@@ -17,25 +17,22 @@ export default defineConfig({
       "scope": true,
       "type": {
         "options": [
-          "✨ feat",
-          "🐛 fix",
-          "📚 docs",
-          "💄 style",
-          "♻️ refactor",
-          "🧪 test",
-          "🔧 chore"
+          "feat",
+          "fix",
+          "docs",
+          "style",
+          "refactor",
+          "test",
+          "chore"
         ]
       },
       "description": {
         "required": true,
-        "maxLength": 100
+        "maxLength": 100,
+        "format": 'bullet'
       },
-      "emoji": true,
       "translate": "english",
-      "instructions": {
-        "enabled": true,
-        "template": "Please follow these instructions when committing:\n1. Use clear and concise descriptions\n2. Include relevant issue numbers\n3. Specify testing details"
-      }
+      "instructions": "Please follow these instructions when committing:\n1. Use clear and concise descriptions\n2. Include relevant issue numbers\n3. Specify testing details"
     }
   },
   "hooks": {

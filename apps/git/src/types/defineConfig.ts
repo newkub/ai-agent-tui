@@ -1,5 +1,6 @@
 type ModelType = 'deepseek' | 'gpt-4o' | 'claude-3.7-sonnet';
 type VersioningType = 'semantic' | 'calendar' | 'other';
+type TranslateType = 'english' | 'mandarin' | 'hindi' | 'spanish' | 'french' | 'arabic' | 'bengali' | 'russian' | 'portuguese' | 'indonesian' | 'urdu' | 'german' | 'japanese' | 'swahili' | 'marathi' | 'telugu' | 'turkish' | 'tamil' | 'vietnamese' | 'thai';
 
 export type AIConfig = {
   useModel: ModelType;
@@ -8,16 +9,6 @@ export type AIConfig = {
   'claude-3.7-sonnet': string;
 };
 
-interface ProviderConfig {
-  ai: AIConfig;
-  apiKey: string;
-  model: string;
-  temperature?: number;
-  maxTokens?: number;
-  topP?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-}
 
 interface CommitMessageConfig {
   scope: boolean;
@@ -27,13 +18,10 @@ interface CommitMessageConfig {
   description: {
     required: boolean;
     maxLength: number;
+    format?: 'long' | 'bullet';
   };
-  emoji: boolean;
-  translate: string;
-  instructions?: {
-    enabled: boolean;
-    template: string;
-  };
+  translate: TranslateType;
+  instructions?: string;
 }
 
 interface CommitConfig {
@@ -91,8 +79,7 @@ export const defaultConfig: GitAssistanceConfig = {
         required: true,
         maxLength: 100,
       },
-      emoji: true,
-      translate: ''
+      translate: 'english'
     }
   },
   hooks: {

@@ -197,9 +197,9 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       console.log(pc.bold(pc.green('Commit Message:')));
       console.log(`${pc.cyan(`✨ ${generatedMessage}`)}\n`);
       
-      if (config.commit.message.instructions?.enabled) {
+      if (config.commit.message.instructions) {
         console.log(pc.cyan('Commit Instructions:'));
-        console.log(config.commit.message.instructions.template);
+        console.log(config.commit.message.instructions);
         console.log();
       }
       
@@ -260,9 +260,9 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
         console.log(pc.bold(pc.green('Description:')));
         console.log(`${pc.cyan(description)}\n`);
         
-        if (config.commit.message.instructions?.enabled) {
+        if (config.commit.message.instructions) {
           console.log(pc.cyan('Commit Instructions:'));
-          console.log(config.commit.message.instructions.template);
+          console.log(config.commit.message.instructions);
           console.log();
         }
         
@@ -324,9 +324,9 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
         console.log(pc.bold(pc.green('Description:')));
         console.log(`${pc.cyan(description)}\n`);
         
-        if (config.commit.message.instructions?.enabled) {
+        if (config.commit.message.instructions) {
           console.log(pc.cyan('Commit Instructions:'));
-          console.log(config.commit.message.instructions.template);
+          console.log(config.commit.message.instructions);
           console.log();
         }
         
@@ -402,9 +402,9 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       console.log(pc.bold(pc.green('Description:')));
       console.log(`${pc.cyan(description)}\n`);
       
-      if (config.commit.message.instructions?.enabled) {
+      if (config.commit.message.instructions) {
         console.log(pc.cyan('Commit Instructions:'));
-        console.log(config.commit.message.instructions.template);
+        console.log(config.commit.message.instructions);
         console.log();
       }
       
