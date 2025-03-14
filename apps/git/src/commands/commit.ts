@@ -1,5 +1,5 @@
 import type { GitAssistanceConfig } from '../types/defineConfig';
-import { intro, text, isCancel, outro, select, multiselect, confirm, spinner } from '@clack/prompts';
+import { confirm, isCancel, select, multiselect, spinner } from '@clack/prompts';
 import { execa } from 'execa';
 import pc from 'picocolors';
 import { useModel, setConfig } from '../providers';
@@ -26,7 +26,7 @@ interface CommitAnswers {
 }
 
 function generateCommitMessage(config: CommitMessageConfig, answers: CommitAnswers): string {
-  const { type, scope, description, emoji, bulletPoints } = answers;
+  const { type, scope, description, emoji } = answers;
   
   // Start with type and scope
   let message = `${type}${scope ? `(${scope})` : ''}: ${description}`;
@@ -36,30 +36,22 @@ function generateCommitMessage(config: CommitMessageConfig, answers: CommitAnswe
     message += ` ${emoji}`;
   }
 
-  // Add bullet points if enabled
-  if (config.bulletPoints.enabled && bulletPoints?.length) {
-    message += `\n\n${bulletPoints
-      .slice(0, config.bulletPoints.maxItems)
-      .map(point => `- ${point}`)
-      .join('\n')}`;
-  }
-
   // Translate if enabled
   if (config.translate.enabled) {
-    message = translateMessage(message);
+    message = translateMessage(message, config.translate);
   }
 
   return message;
 }
 
-function translateMessage(message: string): string {
+function translateMessage(message: string, translateConfig: any): string {
   // Implement translation logic here
   return message;
 }
 
 const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean }> => {
   setConfig(config);
-  intro('Git Commit');
+  console.log('Git Commit');
 
   try {
     // Check git status
@@ -67,7 +59,7 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
     const statusFiles = statusOutput.split('\n').filter(Boolean);
 
     if (!statusFiles.length) {
-      outro('No changes to commit');
+      console.log('No changes to commit');
       return { success: false };
     }
 
@@ -123,7 +115,7 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       });
       
       if (isCancel(stageChanges)) {
-        outro('Operation cancelled');
+        console.log('Operation cancelled');
         return { success: false };
       }
       
@@ -147,7 +139,7 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
     });
 
     if (isCancel(commitStrategy)) {
-      outro('Operation cancelled');
+      console.log('Operation cancelled');
       return { success: false };
     }
 
@@ -159,7 +151,7 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       
       if (stagedFiles.length === 0) {
         console.log(pc.yellow('No staged files to commit. Please stage files first.'));
-        outro('Commit cancelled');
+        console.log('Commit cancelled');
         return { success: false };
       }
       
@@ -182,11 +174,9 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       const [type, scope] = typeScope.replace(')', '').split('(');
 
       const commitMessageConfig: CommitMessageConfig = {
-        emoji: {
-          enabled: true
-        },
+        emoji: true,
         bulletPoints: {
-          enabled: true,
+          enabled: false,
           maxItems: 5
         },
         translate: {
@@ -207,38 +197,15 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       console.log(pc.bold(pc.green('Commit Message:')));
       console.log(`${pc.cyan(`✨ ${generatedMessage}`)}\n`);
       
-      const shouldEdit = await confirm({
-        message: 'Use this commit message?',
-        initialValue: true
-      });
-
-      try {
-        if (!shouldEdit) {
-          const editedMessage = await text({
-            message: 'Enter new commit message:',
-            defaultValue: generatedMessage
-          });
-          
-          if (isCancel(editedMessage)) {
-            outro('Commit cancelled');
-            return { success: false };
-          }
-          
-          await execa('git', ['commit', '-m', String(editedMessage)]);
-        } else {
-          await execa('git', ['commit', '-m', String(generatedMessage)]);
-        }
-        console.log(pc.green('Commit successful!'));
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error(pc.red(`Failed to commit changes: ${error.message}`));
-        } else {
-          console.error('An unknown error occurred:', error);
-        }
-        console.error(pc.dim(String(error)));
-        outro('Commit failed');
-        return { success: false };
+      if (config.commit.message.instructions?.enabled) {
+        console.log(pc.cyan('Commit Instructions:'));
+        console.log(config.commit.message.instructions.template);
+        console.log();
       }
+      
+      // Remove the confirmation prompt and directly commit
+      await execa('git', ['commit', '-m', String(generatedMessage)]);
+      console.log(pc.green('Commit successful!'));
     } else if (commitStrategy === 'folder') {
       // Group files by folder
       const folders = new Set<string>();
@@ -293,36 +260,15 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
         console.log(pc.bold(pc.green('Description:')));
         console.log(`${pc.cyan(description)}\n`);
         
-        const shouldEdit = await confirm({
-          message: 'Use this commit message?',
-          initialValue: true
-        });
-
-        try {
-          if (!shouldEdit) {
-            const editedMessage = await text({
-              message: 'Enter new commit message:',
-              defaultValue: generatedMessage
-            });
-            
-            if (isCancel(editedMessage)) {
-              console.log(pc.yellow('Skipping commit for this folder'));
-              return { success: false };
-            }
-            
-            await execa('git', ['commit', '-m', String(editedMessage)]);
-          } else {
-            await execa('git', ['commit', '-m', String(generatedMessage)]);
-          }
-          console.log(pc.green(`Successfully committed changes in ${folder}`));
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            console.error(pc.red(`Failed to commit changes: ${error.message}`));
-          } else {
-            console.error('An unknown error occurred:', error);
-          }
-          console.error(pc.dim(String(error)));
+        if (config.commit.message.instructions?.enabled) {
+          console.log(pc.cyan('Commit Instructions:'));
+          console.log(config.commit.message.instructions.template);
+          console.log();
         }
+        
+        // Remove the confirmation prompt and directly commit
+        await execa('git', ['commit', '-m', String(generatedMessage)]);
+        console.log(pc.green(`Successfully committed changes in ${folder}`));
       }
     } else if (commitStrategy === 'type') {
       // Group by file extension
@@ -378,36 +324,15 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
         console.log(pc.bold(pc.green('Description:')));
         console.log(`${pc.cyan(description)}\n`);
         
-        const shouldEdit = await confirm({
-          message: 'Use this commit message?',
-          initialValue: true
-        });
-
-        try {
-          if (!shouldEdit) {
-            const editedMessage = await text({
-              message: 'Enter new commit message:',
-              defaultValue: generatedMessage
-            });
-            
-            if (isCancel(editedMessage)) {
-              console.log(pc.yellow('Skipping commit for this file type'));
-              return { success: false };
-            }
-            
-            await execa('git', ['commit', '-m', String(editedMessage)]);
-          } else {
-            await execa('git', ['commit', '-m', String(generatedMessage)]);
-          }
-          console.log(pc.green(`Successfully committed ${ext} files`));
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            console.error(pc.red(`Failed to commit changes: ${error.message}`));
-          } else {
-            console.error('An unknown error occurred:', error);
-          }
-          console.error(pc.dim(String(error)));
+        if (config.commit.message.instructions?.enabled) {
+          console.log(pc.cyan('Commit Instructions:'));
+          console.log(config.commit.message.instructions.template);
+          console.log();
         }
+        
+        // Remove the confirmation prompt and directly commit
+        await execa('git', ['commit', '-m', String(generatedMessage)]);
+        console.log(pc.green(`Successfully committed ${ext} files`));
       }
     } else if (commitStrategy === 'manual') {
       // Let user select files manually
@@ -435,7 +360,7 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       });
 
       if (isCancel(selectedFiles) || !selectedFiles.length) {
-        outro('Operation cancelled or no files selected');
+        console.log('Operation cancelled or no files selected');
         return { success: false };
       }
       
@@ -456,7 +381,7 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
           console.error('An unknown error occurred:', error);
         }
         console.error(pc.dim(String(error)));
-        outro('Commit failed');
+        console.log('Commit failed');
         return { success: false };
       }
       
@@ -477,38 +402,15 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       console.log(pc.bold(pc.green('Description:')));
       console.log(`${pc.cyan(description)}\n`);
       
-      const shouldEdit = await confirm({
-        message: 'Use this commit message?',
-        initialValue: true
-      });
-
-      try {
-        if (!shouldEdit) {
-          const editedMessage = await text({
-            message: 'Enter new commit message:',
-            defaultValue: generatedMessage
-          });
-          
-          if (isCancel(editedMessage)) {
-            console.log(pc.yellow('Skipping commit for this file type'));
-            return { success: false };
-          }
-          
-          await execa('git', ['commit', '-m', String(editedMessage)]);
-        } else {
-          await execa('git', ['commit', '-m', String(generatedMessage)]);
-        }
-        console.log(pc.green('Commit successful!'));
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error(pc.red(`Failed to commit changes: ${error.message}`));
-        } else {
-          console.error('An unknown error occurred:', error);
-        }
-        console.error(pc.dim(String(error)));
-        outro('Commit failed');
-        return { success: false };
+      if (config.commit.message.instructions?.enabled) {
+        console.log(pc.cyan('Commit Instructions:'));
+        console.log(config.commit.message.instructions.template);
+        console.log();
       }
+      
+      // Remove the confirmation prompt and directly commit
+      await execa('git', ['commit', '-m', String(generatedMessage)]);
+      console.log(pc.green('Commit successful!'));
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -517,11 +419,11 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       console.error('An unknown error occurred:', error);
     }
     console.error(pc.dim(String(error)));
-    outro('Operation failed');
+    console.log('Operation failed');
     return { success: false };
   }
 
-  outro('Operation completed');
+  console.log('Operation completed');
   return { success: true };
 };
 

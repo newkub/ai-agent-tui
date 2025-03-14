@@ -14,31 +14,27 @@ export default defineConfig({
     "askConfirm": true,
     "askPush": false, 
     "message": {
-      "scope": {
-        "required": true,
-        "description": "Specify the scope of changes (e.g., component, page, api)"
-      },
+      "scope": true,
       "type": {
-        "options": ["feat", "fix", "docs", "style", "refactor", "test", "chore"],
-        "description": "Type of change being made"
+        "options": [
+          "✨ feat",
+          "🐛 fix",
+          "📚 docs",
+          "💄 style",
+          "♻️ refactor",
+          "🧪 test",
+          "🔧 chore"
+        ]
       },
       "description": {
         "required": true,
-        "maxLength": 100,
-        "description": "Brief description of changes"
+        "maxLength": 100
       },
-      "emoji": {
+      "emoji": true,
+      "translate": "english",
+      "instructions": {
         "enabled": true,
-        "description": "Add relevant emoji to commit message"
-      },
-      "bulletPoints": {
-        "enabled": true,
-        "maxItems": 3,
-        "description": "Use bullet points for detailed changes"
-      },
-      "translate": {
-        "enabled": false,
-        "description": "Translate commit message to English"
+        "template": "Please follow these instructions when committing:\n1. Use clear and concise descriptions\n2. Include relevant issue numbers\n3. Specify testing details"
       }
     }
   },

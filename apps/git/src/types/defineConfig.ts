@@ -20,31 +20,19 @@ interface ProviderConfig {
 }
 
 interface CommitMessageConfig {
-  scope: {
-    required: boolean;
-    description: string;
-  };
+  scope: boolean;
   type: {
     options: string[];
-    description: string;
   };
   description: {
     required: boolean;
     maxLength: number;
-    description: string;
   };
-  emoji: {
+  emoji: boolean;
+  translate: string;
+  instructions?: {
     enabled: boolean;
-    description: string;
-  };
-  bulletPoints: {
-    enabled: boolean;
-    maxItems: number;
-    description: string;
-  };
-  translate: {
-    enabled: boolean;
-    description: string;
+    template: string;
   };
 }
 
@@ -95,32 +83,16 @@ export const defaultConfig: GitAssistanceConfig = {
     askConfirm: false,
     askPush: false,
     message: {
-      scope: {
-        required: false,
-        description: ''
-      },
+      scope: false,
       type: {
         options: [],
-        description: ''
       },
       description: {
         required: true,
         maxLength: 100,
-        description: ''
       },
-      emoji: {
-        enabled: true,
-        description: ''
-      },
-      bulletPoints: {
-        enabled: false,
-        maxItems: 0,
-        description: ''
-      },
-      translate: {
-        enabled: true,
-        description: ''
-      }
+      emoji: true,
+      translate: ''
     }
   },
   hooks: {
