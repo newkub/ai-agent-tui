@@ -1,11 +1,11 @@
-import { intro, outro } from '@clack/prompts';
-import nodeFzf from 'node-fzf';
+import { intro, outro, select, isCancel, text } from '@clack/prompts';
 import { execa } from 'execa';
 import pc from 'picocolors';
+import nodeFzf from 'node-fzf';
 
 interface Commit {
   hash: string;
-  author: { name: string };
+  author: string;
   date: string;
   message: string;
 }
@@ -17,14 +17,11 @@ const getLogHistory = async (): Promise<Commit[]> => {
     '--date=short'
   ]);
 
+  if (!stdout) return [];
+
   return stdout.split('\n').map(line => {
     const [hash, author, date, message] = line.split('\0');
-    return {
-      hash,
-      author: { name: author },
-      date,
-      message
-    };
+    return { hash, author, date, message };
   });
 };
 
@@ -40,7 +37,7 @@ const logHandler = async () => {
     }
 
     const formattedLogs = logs.map(log => 
-      `${pc.yellow(log.hash.slice(0, 7))} ${pc.green(log.date)} ${pc.blue(log.author.name)}: ${log.message}`
+      `${pc.yellow(log.hash.slice(0, 7))} ${pc.green(log.date)} ${pc.blue(log.author)}: ${log.message}`
     );
 
     const result = await nodeFzf(formattedLogs);
@@ -49,9 +46,49 @@ const logHandler = async () => {
       const selectedCommit = logs[result.selected.index];
       console.log('\nCommit Details:');
       console.log(`Hash: ${pc.yellow(selectedCommit.hash)}`);
-      console.log(`Author: ${pc.blue(selectedCommit.author.name)}`);
+      console.log(`Author: ${pc.blue(selectedCommit.author)}`);
       console.log(`Date: ${pc.green(selectedCommit.date)}`);
       console.log(`Message: ${selectedCommit.message}`);
+      
+      const action = await select({
+        message: 'What would you like to do with this commit?',
+        options: [
+          { value: 'checkout', label: 'Checkout this commit', hint: 'Switch to this commit state' },
+          { value: 'createBranch', label: 'Create a branch from this commit', hint: 'Make a new branch at this point' },
+          { value: 'showDiff', label: 'Show diff for this commit', hint: 'View code changes' },
+          { value: 'cancel', label: 'Cancel', hint: 'Return to main menu' }
+        ]
+      });
+      
+      if (isCancel(action) || action === 'cancel') {
+        outro('Operation cancelled');
+        return { success: true, message: 'Operation cancelled' };
+      }
+      
+      switch (action) {
+        case 'checkout':
+          await execa('git', ['checkout', selectedCommit.hash]);
+          outro(`Checked out commit ${pc.yellow(selectedCommit.hash.slice(0, 7))}`);
+          break;
+        case 'createBranch': {
+          const branchName = await text({ 
+            message: 'Enter new branch name:',
+          });
+          if (isCancel(branchName)) {
+            outro('Branch creation cancelled');
+            break;
+          }
+          await execa('git', ['checkout', '-b', branchName, selectedCommit.hash]);
+          outro(`Created branch ${pc.green(branchName)} from commit ${pc.yellow(selectedCommit.hash.slice(0, 7))}`);
+          break;
+        }
+        case 'showDiff': {
+          const { stdout } = await execa('git', ['show', selectedCommit.hash]);
+          console.log(stdout);
+          outro(`Showed diff for commit ${pc.yellow(selectedCommit.hash.slice(0, 7))}`);
+          break;
+        }
+      }
     }
 
     return { success: true, message: 'Log displayed successfully' };

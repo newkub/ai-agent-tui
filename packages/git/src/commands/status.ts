@@ -1,4 +1,4 @@
-import { ExecuteResult, GitCommandOptions, GitStatusFile } from '../types/git';
+import type { ExecuteResult, GitCommandOptions, GitStatusFile } from '../types/git';
 import { execute } from './execute';
 
 export const getFileStatus = async (filePath: string, options: GitCommandOptions = {}): Promise<ExecuteResult<GitStatusFile>> => {
