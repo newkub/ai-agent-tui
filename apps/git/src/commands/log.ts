@@ -1,29 +1,7 @@
 import { intro, outro, select, isCancel, text } from '@clack/prompts';
-import { execa } from 'execa';
 import pc from 'picocolors';
 import nodeFzf from 'node-fzf';
-
-interface Commit {
-  hash: string;
-  author: string;
-  date: string;
-  message: string;
-}
-
-const getLogHistory = async (): Promise<Commit[]> => {
-  const { stdout } = await execa('git', [
-    'log',
-    '--pretty=format:%H%x00%an%x00%ad%x00%s',
-    '--date=short'
-  ]);
-
-  if (!stdout) return [];
-
-  return stdout.split('\n').map(line => {
-    const [hash, author, date, message] = line.split('\0');
-    return { hash, author, date, message };
-  });
-};
+import { getLogHistory, checkoutCommit, createBranchFromCommit, showCommitDiff } from '@newkub/git';
 
 const logHandler = async () => {
   intro('Git Log');
@@ -67,7 +45,7 @@ const logHandler = async () => {
       
       switch (action) {
         case 'checkout':
-          await execa('git', ['checkout', selectedCommit.hash]);
+          await checkoutCommit(selectedCommit.hash);
           outro(`Checked out commit ${pc.yellow(selectedCommit.hash.slice(0, 7))}`);
           break;
         case 'createBranch': {
@@ -78,13 +56,13 @@ const logHandler = async () => {
             outro('Branch creation cancelled');
             break;
           }
-          await execa('git', ['checkout', '-b', branchName, selectedCommit.hash]);
+          await createBranchFromCommit(selectedCommit.hash, branchName);
           outro(`Created branch ${pc.green(branchName)} from commit ${pc.yellow(selectedCommit.hash.slice(0, 7))}`);
           break;
         }
         case 'showDiff': {
-          const { stdout } = await execa('git', ['show', selectedCommit.hash]);
-          console.log(stdout);
+          const diff = await showCommitDiff(selectedCommit.hash);
+          console.log(diff);
           outro(`Showed diff for commit ${pc.yellow(selectedCommit.hash.slice(0, 7))}`);
           break;
         }

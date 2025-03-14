@@ -1,28 +1,11 @@
 import { intro, select, text, confirm, isCancel, outro } from '@clack/prompts';
-import { execa } from 'execa';
 import pc from 'picocolors';
 import semver from 'semver';
-
-const getCurrentBranch = async (): Promise<string> => {
-  const { stdout } = await execa('git', ['branch', '--show-current']);
-  return stdout.trim();
-};
-
-const getLatestTag = async (): Promise<string | null> => {
-  try {
-    const { stdout } = await execa('git', ['describe', '--tags', '--abbrev=0']);
-    return stdout.trim();
-  } catch {
-    return null;
-  }
-};
+import { getCurrentBranch, getLatestTag, generateChangelog } from '@newkub/git';
+import { execa } from 'execa';
 
 const bumpVersion = (_currentVersion: string, type: semver.ReleaseType): string => {
   return semver.inc(_currentVersion, type) || _currentVersion;
-};
-
-const generateChangelog = async (_newVersion: string): Promise<void> => {
-  await execa('npx', ['conventional-changelog', '-p', 'angular', '-i', 'CHANGELOG.md', '-s', '-r', '0']);
 };
 
 const releaseHandler = async () => {

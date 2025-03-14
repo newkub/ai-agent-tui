@@ -17,7 +17,8 @@
     "types": ["bun-types"],
     "paths": {
       "@newkub/ai": ["../../packages/ai/src/index.ts"],
-      "@newkub/git": ["../../packages/git/src/index.ts"]
+      "@newkub/git": ["../../packages/git/src/index.ts"],
+      "@cli/git": ["../../packages/git/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

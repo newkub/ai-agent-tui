@@ -1,29 +1,7 @@
 import { intro, outro, select, isCancel } from '@clack/prompts';
-import { execa } from 'execa';
 import pc from 'picocolors';
 import nodeFzf from 'node-fzf';
-
-interface Branch {
-  name: string;
-  current: boolean;
-}
-
-const getBranches = async (): Promise<Branch[]> => {
-  const { stdout } = await execa('git', ['branch', '--list', '--format=%(refname:short)%00%(HEAD)']);
-  return stdout.split('\n')
-    .filter(Boolean)
-    .map(line => {
-      const [name, isCurrent] = line.split('\0');
-      return {
-        name,
-        current: isCurrent === '*'
-      };
-    });
-};
-
-const checkoutBranch = async (branch: string): Promise<void> => {
-  await execa('git', ['checkout', branch]);
-};
+import { getBranches, checkoutBranch, mergeBranch, deleteBranch } from '@cli/git';
 
 const handler = async () => {
   intro('Git Branch');
@@ -69,12 +47,12 @@ const handler = async () => {
             break;
           case 'merge':
             console.log(`\nMerging ${pc.green(selectedBranch.name)} into current branch`);
-            await execa('git', ['merge', selectedBranch.name]);
+            await mergeBranch(selectedBranch.name);
             outro(`Successfully merged ${pc.green(selectedBranch.name)}`);
             break;
           case 'delete':
             console.log(`\nDeleting branch: ${pc.green(selectedBranch.name)}`);
-            await execa('git', ['branch', '-d', selectedBranch.name]);
+            await deleteBranch(selectedBranch.name);
             outro(`Successfully deleted ${pc.green(selectedBranch.name)}`);
             break;
           case 'cancel':

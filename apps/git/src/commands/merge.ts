@@ -1,6 +1,6 @@
 import { text, log, isCancel, outro } from '@clack/prompts';
-import { execa } from 'execa';
 import pc from 'picocolors';
+import { mergeBranch } from '@newkub/git';
 
 async function mergeCommand() {
   try {
@@ -19,7 +19,7 @@ async function mergeCommand() {
     }
 
     console.log(`\nMerging ${pc.green(branch)} into current branch`);
-    await execa('git', ['merge', branch]);
+    await mergeBranch(branch);
     log.success(`Merged ${pc.green(branch)} into current branch`);
   } catch (error) {
     log.error(`Error: ${(error as Error).message}`);
