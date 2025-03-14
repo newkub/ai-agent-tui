@@ -14,13 +14,32 @@ export default defineConfig({
     "askConfirm": true,
     "askPush": false, 
     "message": {
-      "scope": "",
-      "type": "feat",
-      "description": "",
-      "emoji": "",
-      "maxLength": 100,
-      "translate": "English",
-      "bulletPoints": true
+      "scope": {
+        "required": true,
+        "description": "Specify the scope of changes (e.g., component, page, api)"
+      },
+      "type": {
+        "options": ["feat", "fix", "docs", "style", "refactor", "test", "chore"],
+        "description": "Type of change being made"
+      },
+      "description": {
+        "required": true,
+        "maxLength": 100,
+        "description": "Brief description of changes"
+      },
+      "emoji": {
+        "enabled": true,
+        "description": "Add relevant emoji to commit message"
+      },
+      "bulletPoints": {
+        "enabled": true,
+        "maxItems": 3,
+        "description": "Use bullet points for detailed changes"
+      },
+      "translate": {
+        "enabled": false,
+        "description": "Translate commit message to English"
+      }
     }
   },
   "hooks": {
