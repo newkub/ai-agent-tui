@@ -19,15 +19,33 @@ interface ProviderConfig {
   presencePenalty?: number;
 }
 
-interface MessageConfig {
-  scope: string;
-  type: string;
-  description: string;
-  emoji: string;
-  maxLength: number;
-  translate: string;
-  bulletPoints: boolean;
-  prefix?: string;
+interface CommitMessageConfig {
+  scope: {
+    required: boolean;
+    description: string;
+  };
+  type: {
+    options: string[];
+    description: string;
+  };
+  description: {
+    required: boolean;
+    maxLength: number;
+    description: string;
+  };
+  emoji: {
+    enabled: boolean;
+    description: string;
+  };
+  bulletPoints: {
+    enabled: boolean;
+    maxItems: number;
+    description: string;
+  };
+  translate: {
+    enabled: boolean;
+    description: string;
+  };
 }
 
 interface CommitConfig {
@@ -36,7 +54,7 @@ interface CommitConfig {
   askStage: boolean;
   askConfirm: boolean;
   askPush: boolean;
-  message: MessageConfig;
+  message: CommitMessageConfig;
 }
 
 interface HooksConfig {
@@ -77,13 +95,32 @@ export const defaultConfig: GitAssistanceConfig = {
     askConfirm: false,
     askPush: false,
     message: {
-      scope: '',
-      type: '',
-      description: '',
-      emoji: '',
-      maxLength: 100,
-      translate: 'English',
-      bulletPoints: false
+      scope: {
+        required: false,
+        description: ''
+      },
+      type: {
+        options: [],
+        description: ''
+      },
+      description: {
+        required: true,
+        maxLength: 100,
+        description: ''
+      },
+      emoji: {
+        enabled: true,
+        description: ''
+      },
+      bulletPoints: {
+        enabled: false,
+        maxItems: 0,
+        description: ''
+      },
+      translate: {
+        enabled: true,
+        description: ''
+      }
     }
   },
   hooks: {

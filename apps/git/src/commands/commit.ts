@@ -4,6 +4,59 @@ import { execa } from 'execa';
 import pc from 'picocolors';
 import { useModel, setConfig } from '../providers';
 
+interface CommitMessageConfig {
+  emoji: {
+    enabled: boolean;
+  };
+  bulletPoints: {
+    enabled: boolean;
+    maxItems: number;
+  };
+  translate: {
+    enabled: boolean;
+  };
+}
+
+interface CommitAnswers {
+  type: string;
+  scope: string;
+  description: string;
+  emoji: string;
+  bulletPoints: string[];
+}
+
+function generateCommitMessage(config: CommitMessageConfig, answers: CommitAnswers): string {
+  const { type, scope, description, emoji, bulletPoints } = answers;
+  
+  // Start with type and scope
+  let message = `${type}${scope ? `(${scope})` : ''}: ${description}`;
+
+  // Add emoji if enabled
+  if (config.emoji.enabled && emoji) {
+    message += ` ${emoji}`;
+  }
+
+  // Add bullet points if enabled
+  if (config.bulletPoints.enabled && bulletPoints?.length) {
+    message += `\n\n${bulletPoints
+      .slice(0, config.bulletPoints.maxItems)
+      .map(point => `- ${point}`)
+      .join('\n')}`;
+  }
+
+  // Translate if enabled
+  if (config.translate.enabled) {
+    message = translateMessage(message);
+  }
+
+  return message;
+}
+
+function translateMessage(message: string): string {
+  // Implement translation logic here
+  return message;
+}
+
 const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean }> => {
   setConfig(config);
   intro('Git Commit');
@@ -117,20 +170,30 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       
       const s = spinner();
       s.start('Generating commit message...');
-      const generatedMessage = await useModel(
-        `Generate a concise and descriptive commit message and description for these files: ${stagedFiles.join('\n')}. Format the response as:
-        Commit Message: <message>
-        Description: <description>`
-      );
+      const commitMessageConfig: CommitMessageConfig = {
+        emoji: {
+          enabled: true
+        },
+        bulletPoints: {
+          enabled: true,
+          maxItems: 5
+        },
+        translate: {
+          enabled: false
+        }
+      };
+      const commitAnswers: CommitAnswers = {
+        type: 'feat',
+        scope: 'all',
+        description: 'Initial commit',
+        emoji: '🎉',
+        bulletPoints: ['Added new feature', 'Fixed bug', 'Improved performance']
+      };
+      const generatedMessage = generateCommitMessage(commitMessageConfig, commitAnswers);
       s.stop('Generated commit message');
 
-      const [commitMessage, description] = generatedMessage.split('\nDescription: ');
-      const formattedCommitMessage = commitMessage.replace('Commit Message: ', '');
-
       console.log(pc.bold(pc.green('Commit Message:')));
-      console.log(`${pc.cyan(`✨ ${formattedCommitMessage}`)}\n`);
-      console.log(pc.bold(pc.green('Description:')));
-      console.log(`${pc.cyan(description)}\n`);
+      console.log(`${pc.cyan(`✨ ${generatedMessage}`)}\n`);
       
       const shouldEdit = await confirm({
         message: 'Use this commit message?',
