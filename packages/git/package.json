@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
-    "start": "bun run ./src/start.ts",
+    "start": "bun run ./src/test/start.ts",
     "dev": "bun --watch run ./src/index.ts"
   },
   "dependencies": {

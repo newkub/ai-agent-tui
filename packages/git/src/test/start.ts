@@ -1,6 +1,6 @@
 import { cliui } from '@poppinss/cliui';
 import pc from 'picocolors';
-import * as git from './index';
+import * as git from '../index';
 
 const ui = cliui();
 const instructions = ui.instructions();

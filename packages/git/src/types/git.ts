@@ -10,6 +10,10 @@ export type GitAuthor = {
 };
 export type GitFilePath = string;
 
+// Utility types
+export type NonEmptyString<T extends string> = T extends '' ? never : T;
+export type PositiveNumber = number & { __positive: true };
+
 // Git date formats
 export type GitDateISO = string; // ISO 8601
 export type GitDateUnix = number; // Unix timestamp
@@ -50,15 +54,24 @@ export type GitLogFormat = 'oneline' | 'short' | 'medium' | 'full' | 'fuller' | 
 export type GitCommandOptions = {
   workingDir?: string;
   remote?: GitRemote;
-  branch?: GitBranch;
-  message?: GitMessage;
-  tag?: GitTag;
+  branch?: NonEmptyString<GitBranch>;
+  message?: NonEmptyString<GitMessage>;
+  tag?: NonEmptyString<GitTag>;
   author?: GitAuthor;
   date?: GitDateISO;
   logFormat?: GitLogFormat;
   noVerify?: boolean;
   force?: boolean;
 };
+
+// Validation types
+export type ValidGitHash = string & { __validHash: true };
+export type ValidGitPath = string & { __validPath: true };
+
+// Git command result
+export type GitCommandResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: GitError };
 
 // Changelog types
 export interface ChangelogOptions {
@@ -108,3 +121,20 @@ export type ExecuteResult<T> = {
   error?: GitError;
   warnings?: string[];
 };
+
+// Git-related commands
+export interface GitCommit {
+  message: string;
+  author: string;
+  date: string;
+}
+
+export interface GitStagedFile {
+  path: string;
+  status: string;
+}
+
+export interface GitBranchInfo {
+  name: string;
+  isCurrent: boolean;
+}

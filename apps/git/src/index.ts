@@ -4,7 +4,6 @@ import { commit, log, release, branch } from './commands';
 import { promisify } from 'util';
 import { exec as execCallback } from 'child_process';
 import type { GitAssistanceConfig } from './types/defineConfig';
-import { getGitStatus } from './status';
 
 const execPromise = promisify(execCallback);
 
@@ -12,6 +11,7 @@ interface CommandHandler {
   value: string;
   label: string;
   handler: (config?: GitAssistanceConfig) => Promise<unknown>;
+  hint?: string;
 }
 
 /**
@@ -28,49 +28,43 @@ export const runCommand = async (command: string): Promise<string> => {
 };
 
 /**
- * Truncates text to specified maximum length
- */
-const truncateText = (text: string, maxLength: number): string => {
-  return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
-};
-
-/**
  * Main application entry point
  */
 async function main(): Promise<void> {
   try {
     console.log(`\n${pc.magenta('🚀')} ${pc.bold(pc.cyan('Git Assistance'))} ${pc.magenta('✨')}`);
     console.log(`${pc.dim(pc.italic('Ready to enhance your Git workflow with AI assistance'))}`);
-    
-    const gitStatus = await getGitStatus();
-    const maxLength = process.stdout.columns - 20;
 
     const commandHandlers: CommandHandler[] = [
       { 
         value: 'commit', 
-        label: `✨ Commit        ${pc.dim(truncateText(gitStatus.commit, maxLength))}`,
-        handler: commit
+        label: "✨ Commit",
+        handler: commit,
+        hint: "Create a new commit with AI assistance"
       },
       { 
         value: 'log', 
-        label: `📝 Log           ${pc.dim(truncateText(gitStatus.commit, maxLength))}`,
-        handler: log
+        label: "📝 Log",
+        handler: log,
+        hint: "Browse and search through commit history"
       },
       { 
         value: 'release', 
-        label: `🚀 Release       ${pc.dim(truncateText(gitStatus.tag, maxLength))}`,
-        handler: release
+        label: "🚀 Release",
+        handler: release,
+        hint: "Create a new release with version management"
       },
       { 
         value: 'branch', 
-        label: `🌿 Branch        ${pc.dim(truncateText(gitStatus.branch, maxLength))}`,
-        handler: branch
+        label: "🌿 Branch",
+        handler: branch,
+        hint: "Manage Git branches"
       }
     ];
     
     const selectedCommand = await select({
       message: 'Select a command',
-      options: commandHandlers.map(({ value, label }) => ({ value, label }))
+      options: commandHandlers.map(({ value, label, hint }) => ({ value, label, hint }))
     });
 
     if (isCancel(selectedCommand)) {

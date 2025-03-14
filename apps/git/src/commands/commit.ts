@@ -122,7 +122,7 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       if (stageChanges) {
         const s = spinner();
         s.start('Staging all changes...');
-        await execa('git', ['add', '.']);
+        await execa('git', ['add', '--all']);
         s.stop('All changes staged');
       }
     }
