@@ -1,5 +1,5 @@
 import type { ExecuteResult, GitCommandOptions } from '../types/git';
-import { execute } from './execute';
+export { execute } from './execute';
 
 export const init = async (options: GitCommandOptions = {}): Promise<ExecuteResult<boolean>> => {
   try {
