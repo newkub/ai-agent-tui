@@ -19,6 +19,17 @@ export const oauthLogin = async (provider: string): Promise<string> => {
 };
 
 export const oauthCallback = async (code: string): Promise<{ token: string }> => {
-  // TODO: Exchange code for token
-  return { token: 'oauth-token' };
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: providers.google.clientId,
+      client_secret: providers.google.clientSecret,
+      redirect_uri: providers.google.redirectUri,
+      grant_type: 'authorization_code'
+    })
+  });
+  const data = await response.json();
+  return { token: data.access_token };
 };

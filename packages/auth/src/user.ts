@@ -3,7 +3,7 @@ interface User {
   password: string;
 }
 
-const users: User[] = [];
+export const users: User[] = [];
 
 export const login = async (username: string, password: string): Promise<boolean> => {
   const user = users.find(u => u.username === username);

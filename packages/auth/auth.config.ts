@@ -1,4 +1,4 @@
-import { defineConfig } from './src/config';
+import { defineConfig, type AuthConfig } from './src/config';
 
 export default defineConfig({
   session: {
@@ -40,4 +40,4 @@ export default defineConfig({
       windowMs: 15 * 60 * 1000
     }
   }
-});
+} satisfies AuthConfig);
