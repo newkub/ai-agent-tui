@@ -15,7 +15,7 @@ const runCommand = async (command: string): Promise<string> => {
   }
 };
 
-const truncateText = (text: string, maxLength: number) => {
+const truncateText = (text: string, maxLength: number): string => {
   return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
 };
 
@@ -25,7 +25,7 @@ const formatCommitStatus = (commit: any) => {
   return `Commit Message: ${message}`;
 };
 
-async function getGitStatus() {
+async function getGitStatus(): Promise<{ commit: string; branch: string; tag: string }> {
   try {
     const commit = await runCommand('git log -1 --pretty=format:"%s (%ad)" --date=short');
     const branch = await runCommand('git branch --show-current');

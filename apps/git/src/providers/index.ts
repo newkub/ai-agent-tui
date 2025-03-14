@@ -1,9 +1,6 @@
 import type { GitAssistanceConfig } from '../types/defineConfig';
 import config from '../../git-assistance.config';
 import { defaultConfig } from '../types/defineConfig';
-import { anthropicClient } from './anthropic';
-import { deepseekClient } from './deepseek';
-import { openaiClient } from './openai';
 
 let localConfig = config || defaultConfig;
 
@@ -18,16 +15,16 @@ export async function useModel(prompt: string): Promise<string> {
   const modelType = localConfig.ai.useModel;
   switch (modelType) {
     case 'claude-3.7-sonnet': {
-      const response = await anthropicClient(prompt);
+      const response = await import('./anthropic').then(module => module.anthropicClient(prompt));
       return response;
     }
     case 'deepseek': {
-      const response = await deepseekClient(prompt);
+      const response = await import('./deepseek').then(module => module.deepseekClient(prompt));
       if (!response) throw new Error('No response from Deepseek');
       return response;
     }
     case 'gpt-4o': {
-      const response = await openaiClient(prompt, { model: modelType });
+      const response = await import('./openai').then(module => module.openaiClient(prompt, { model: modelType }));
       return response.content;
     }
     default: {
@@ -35,3 +32,7 @@ export async function useModel(prompt: string): Promise<string> {
     }
   }
 }
+
+export { anthropicClient } from './anthropic';
+export { deepseekClient } from './deepseek';
+export { openaiClient } from './openai';

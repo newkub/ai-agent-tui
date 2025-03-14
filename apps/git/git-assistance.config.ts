@@ -9,7 +9,7 @@ export default defineConfig({
   },
   "commit": {
     "mode": "aicommit",
-    "askMode" : true,
+    "askMode" : false,
     "askStage": true,
     "askConfirm": true,
     "askPush": false, 
@@ -19,7 +19,8 @@ export default defineConfig({
       "description": "",
       "emoji": "",
       "maxLength": 100,
-      "translate": "English"
+      "translate": "English",
+      "bulletPoints": true
     }
   },
   "hooks": {

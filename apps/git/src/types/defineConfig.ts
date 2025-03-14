@@ -1,5 +1,4 @@
 type ModelType = 'deepseek' | 'gpt-4o' | 'claude-3.7-sonnet';
-type CommitType = 'feat' | 'fix' | 'docs' | 'style' | 'refactor' | 'test' | 'chore';
 type VersioningType = 'semantic' | 'calendar' | 'other';
 
 export type AIConfig = {
@@ -20,13 +19,15 @@ interface ProviderConfig {
   presencePenalty?: number;
 }
 
-interface CommitMessageConfig {
+interface MessageConfig {
   scope: string;
-  type: CommitType;
+  type: string;
   description: string;
   emoji: string;
   maxLength: number;
   translate: string;
+  bulletPoints: boolean;
+  prefix?: string;
 }
 
 interface CommitConfig {
@@ -35,7 +36,7 @@ interface CommitConfig {
   askStage: boolean;
   askConfirm: boolean;
   askPush: boolean;
-  message: CommitMessageConfig;
+  message: MessageConfig;
 }
 
 interface HooksConfig {
@@ -52,6 +53,12 @@ interface ReleaseConfig {
 export interface GitAssistanceConfig {
   ai: AIConfig;
   commit: CommitConfig;
+  commitMessage?: {
+    emoji: boolean;
+    scope: boolean;
+    type: boolean;
+    bulletPoints: boolean;
+  };
   hooks: HooksConfig;
   release: ReleaseConfig;
 }
@@ -64,7 +71,6 @@ export const defaultConfig: GitAssistanceConfig = {
     'claude-3.7-sonnet': ''
   },
   commit: {
-    defaultMode: '1commit',
     mode: 'aicommit',
     askMode: true,
     askStage: true,
@@ -72,11 +78,12 @@ export const defaultConfig: GitAssistanceConfig = {
     askPush: false,
     message: {
       scope: '',
-      type: 'feat',
+      type: '',
       description: '',
       emoji: '',
       maxLength: 100,
-      translate: 'English'
+      translate: 'English',
+      bulletPoints: false
     }
   },
   hooks: {
