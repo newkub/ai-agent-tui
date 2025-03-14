@@ -117,17 +117,17 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
 
     // Ask if user wants to stage all changes
     if (unstaged > 0 || untracked > 0) {
-      const stageAll = await confirm({
+      const stageChanges = await confirm({
         message: 'Stage all changes before committing?',
-        initialValue: false
+        initialValue: true
       });
       
-      if (isCancel(stageAll)) {
+      if (isCancel(stageChanges)) {
         outro('Operation cancelled');
         return { success: false };
       }
       
-      if (stageAll) {
+      if (stageChanges) {
         const s = spinner();
         s.start('Staging all changes...');
         await execa('git', ['add', '.']);
@@ -170,6 +170,17 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
       
       const s = spinner();
       s.start('Generating commit message...');
+
+      // Generate commit message using AI
+      const aiResponse = await useModel(
+        `Generate a semantic commit message for these changes:\n${stagedFiles.join('\n')}. Format: <type>(<scope>): <description>\n\n<bullet points (if any)>`
+      );
+
+      // Parse AI response
+      const [commitHeader, ...bulletPoints] = aiResponse.split('\n');
+      const [typeScope, description] = commitHeader.split(': ');
+      const [type, scope] = typeScope.replace(')', '').split('(');
+
       const commitMessageConfig: CommitMessageConfig = {
         emoji: {
           enabled: true
@@ -183,13 +194,14 @@ const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean 
         }
       };
       const commitAnswers: CommitAnswers = {
-        type: 'feat',
-        scope: 'all',
-        description: 'Initial commit',
-        emoji: '🎉',
-        bulletPoints: ['Added new feature', 'Fixed bug', 'Improved performance']
+        type: type || 'feat',
+        scope: scope || '',
+        description: description || 'Update',
+        emoji: '',
+        bulletPoints: bulletPoints.filter(Boolean).map(p => p.replace('- ', ''))
       };
       const generatedMessage = generateCommitMessage(commitMessageConfig, commitAnswers);
+
       s.stop('Generated commit message');
 
       console.log(pc.bold(pc.green('Commit Message:')));
