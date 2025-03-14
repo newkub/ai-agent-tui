@@ -3,20 +3,22 @@ export interface SessionConfig {
   refreshTokenExpiresIn: string;
   cookieName: string;
   secure: boolean;
+  maxAge?: number;
 }
 
 export interface JwtConfig {
   secret: string;
   algorithm: string;
+  ttl?: string;
 }
 
 export interface PasswordConfig {
   saltRounds: number;
   minLength: number;
-  requireLowercase?: boolean;
-  requireUppercase?: boolean;
-  requireNumbers?: boolean;
-  requireSpecialChars?: boolean;
+  requireLowercase: boolean;
+  requireUppercase: boolean;
+  requireNumbers: boolean;
+  requireSpecialChars: boolean;
 }
 
 export interface OAuthProviderConfig {
@@ -26,7 +28,7 @@ export interface OAuthProviderConfig {
 }
 
 export interface SecurityConfig {
-  enable2FA?: boolean;
+  enable2FA: boolean;
   rateLimit?: {
     maxAttempts: number;
     windowMs: number;
@@ -40,7 +42,7 @@ export interface AuthConfig {
   oauth: {
     providers: Record<string, OAuthProviderConfig>;
   };
-  security?: SecurityConfig;
+  security: SecurityConfig;
 }
 
 export function defineConfig<T extends AuthConfig>(config: T): T {
