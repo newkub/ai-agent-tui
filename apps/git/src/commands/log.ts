@@ -1,126 +1,64 @@
-import { intro, outro, select, isCancel } from '@clack/prompts';
-import { getLogHistory, getCurrentBranch } from '@newkub/git';
-import type { Commit } from '@newkub/git';
-import type { CommandHandler } from '../types/command';
-import config from '../../git-assistance.config';
+import { intro, outro } from '@clack/prompts';
+import nodeFzf from 'node-fzf';
+import { execa } from 'execa';
+import pc from 'picocolors';
 
-const formatCommitMessage = (message: string): string => {
-  if (config.commit.message.includeEmoji) {
-    const type = message.split(':')[0] as keyof typeof config.commit.message.emojiMap;
-    const emoji = config.commit.message.emojiMap[type] || '';
-    return `${emoji} ${message}`;
-  }
-  return message;
-};
+interface Commit {
+  hash: string;
+  author: { name: string };
+  date: string;
+  message: string;
+}
 
-const filterCommitsByBranch = async (commits: Commit[]): Promise<Commit[]> => {
-  const currentBranch = await getCurrentBranch();
-  const { protection } = config.git.branch;
+const getLogHistory = async (): Promise<Commit[]> => {
+  const { stdout } = await execa('git', [
+    'log',
+    '--pretty=format:%H%x00%an%x00%ad%x00%s',
+    '--date=short'
+  ]);
 
-  if (protection.main.protected && currentBranch === 'main') {
-    return commits.filter(commit => 
-      commit.branch && config.commit.validation.allowedBranches.includes(commit.branch)
-    );
-  }
-  return commits;
-};
-
-const log: CommandHandler = async () => {
-  intro('Git AI Log Viewer');
-
-  let history = await getLogHistory();
-  history = await filterCommitsByBranch(history);
-
-  if (!history.length) {
+  return stdout.split('\n').map(line => {
+    const [hash, author, date, message] = line.split('\0');
     return {
-      success: true,
-      message: 'No commit history found'
+      hash,
+      author: { name: author },
+      date,
+      message
     };
-  }
-
-  const formattedLog = history.map(commit => ({
-    ...commit,
-    message: formatCommitMessage(commit.message)
-  }));
-
-  const pageSize = 10;
-  let page = 0;
-  let selectedCommit: Commit | null = null;
-
-  while (true) {
-    const start = page * pageSize;
-    const end = start + pageSize;
-    const pageLogs = formattedLog.slice(start, end);
-
-    if (selectedCommit) {
-      console.log('\nCommit Details:');
-      console.log(`Hash: ${selectedCommit.hash}`);
-      console.log(`Author: ${selectedCommit.author.name} <${selectedCommit.author.email}>`);
-      console.log(`Date: ${selectedCommit.date}`);
-      console.log(`Message: ${selectedCommit.message}`);
-      console.log(`Branch: ${selectedCommit.branch || 'unknown'}`);
-      if (selectedCommit.tags?.length) {
-        console.log(`Tags: ${selectedCommit.tags.join(', ')}`);
-      }
-      
-      const detailAction = await select({
-        message: 'Select action',
-        options: [
-          { value: 'back', label: 'Back to list' },
-          { value: 'exit', label: 'Exit' }
-        ]
-      });
-      
-      if (isCancel(detailAction) || detailAction === 'exit') {
-        break;
-      }
-      
-      selectedCommit = null;
-      continue;
-    }
-
-    console.log('\nCommit History:');
-    console.log(pageLogs.map((commit, idx) => 
-      `${idx + 1}. ${commit.hash.slice(0, 7)} ${commit.message}`
-    ).join('\n'));
-
-    const options = [
-      ...(pageLogs.map((_, idx) => ({ 
-        value: `commit_${idx}`, 
-        label: `View commit ${idx + 1}` 
-      }))),
-      { value: 'next', label: 'Next Page' },
-      { value: 'prev', label: 'Previous Page' },
-      { value: 'exit', label: 'Exit' }
-    ];
-
-    const action = await select({
-      message: 'Select action',
-      options
-    });
-
-    if (isCancel(action) || action === 'exit') {
-      break;
-    }
-
-    if (action === 'next') {
-      if ((page + 1) * pageSize < formattedLog.length) {
-        page++;
-      }
-    } else if (action === 'prev') {
-      page = Math.max(0, page - 1);
-    } else if (action.startsWith('commit_')) {
-      const idx = Number.parseInt(action.split('_')[1]);
-      selectedCommit = pageLogs[idx];
-    }
-  }
-
-  outro('Log session ended');
-  return {
-    success: true,
-    message: 'Log displayed successfully',
-    data: formattedLog
-  };
+  });
 };
 
-export default log;
+const logHandler = async () => {
+  intro('Git Log');
+
+  try {
+    const logs = await getLogHistory();
+    
+    if (!logs.length) {
+      outro('No commit history found');
+      return { success: true, message: 'No commits found' };
+    }
+
+    const formattedLogs = logs.map(log => 
+      `${pc.yellow(log.hash.slice(0, 7))} ${pc.green(log.date)} ${pc.blue(log.author.name)}: ${log.message}`
+    );
+
+    const result = await nodeFzf(formattedLogs);
+    
+    if (result.selected) {
+      const selectedCommit = logs[result.selected.index];
+      console.log('\nCommit Details:');
+      console.log(`Hash: ${pc.yellow(selectedCommit.hash)}`);
+      console.log(`Author: ${pc.blue(selectedCommit.author.name)}`);
+      console.log(`Date: ${pc.green(selectedCommit.date)}`);
+      console.log(`Message: ${selectedCommit.message}`);
+    }
+
+    return { success: true, message: 'Log displayed successfully' };
+  } catch (error) {
+    outro(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export default logHandler;

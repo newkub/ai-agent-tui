@@ -9,8 +9,8 @@
     "declaration": true,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
-    "noEmit": false,
-    "emitDeclarationOnly": true,
+    "noEmit": true,
+    "emitDeclarationOnly": false,
     "outDir": "./dist",
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
@@ -20,6 +20,6 @@
       "@newkub/git": ["../../packages/git/src/index.ts"]
     }
   },
-  "include": ["src/**/*", "scripts/checkConfig.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

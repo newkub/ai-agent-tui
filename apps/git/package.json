@@ -9,9 +9,9 @@
     "git-ai-assistance": "./dist/index.js"
   },
   "scripts": {
+    "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir dist",
-    "start": "bun run ./dist/index.js",
-    "dev": "bun tsc --noEmit --watch",
+    "dev": "bun run dev src/index.ts --watch --noEmit",
     "biome": "biome check .",
     "biome:fix": "biome check --apply .",
     "release": "release-it"
@@ -53,8 +53,10 @@
     "@newkub/ai": "workspace:*",
     "@newkub/git": "workspace:*",
     "@poppinss/cliui": "^6.4.3",
+    "@poppinss/prompts": "^3.1.4",
     "@slack/web-api": "^7.8.0",
     "cliui": "^8.0.1",
+    "date-fns": "^4.1.0",
     "nodemailer": "^6.10.0",
     "openai": "^4.87.3",
     "picocolors": "^1.1.1",
@@ -63,6 +65,7 @@
   "devDependencies": {
     "@types/node": "22.13.10",
     "@types/nodemailer": "^6.4.17",
+    "@types/semver": "^7.5.8",
     "node-fzf": "^0.13.1",
     "release-it": "^18.1.2",
     "typescript": "^5.8.2"

@@ -1,135 +1,453 @@
-import { getCurrentBranch, getStagedFiles, createCommit, push } from '@newkub/git';
-import type { CommandHandler } from '../types/command';
-import config from '../../git-assistance.config';
-import { generateCommitMessage } from '@newkub/ai';
-import { select, isCancel } from '@clack/prompts';
+import type { GitAssistanceConfig } from '../types/defineConfig';
+import { intro, text, isCancel, outro, select, multiselect, confirm, spinner } from '@clack/prompts';
+import { execa } from 'execa';
+import pc from 'picocolors';
+import { useModel, setConfig } from '../providers';
 
-const validateBranch = async (): Promise<boolean> => {
-  const currentBranch = await getCurrentBranch();
-  const allowedBranches = config.git.branch.protection.main.protected 
-    ? ['main'] 
-    : config.commit.validation.allowedBranches;
+const handler = async (config: GitAssistanceConfig): Promise<{ success: boolean }> => {
+  setConfig(config);
+  intro('Git Commit');
 
-  if (!allowedBranches.includes(currentBranch)) {
-    console.error(`Error: Branch '${currentBranch}' is not allowed for commits.`);
-    return false;
-  }
-  return true;
-};
+  try {
+    // Check git status
+    const { stdout: statusOutput } = await execa('git', ['status', '--porcelain']);
+    const statusFiles = statusOutput.split('\n').filter(Boolean);
 
-const validateCommitMessage = (message: string): boolean => {
-  const { validation } = config.commit;
-  if (!validation.message) return true;
+    if (!statusFiles.length) {
+      outro('No changes to commit');
+      return { success: false };
+    }
 
-  const typePattern = new RegExp(`^(${validation.allowedTypes.join('|')})`);
-  const scopePattern = new RegExp(validation.scopePattern);
+    // Display git status summary
+    const staged = statusFiles.filter(f => !f.startsWith(' ')).length;
+    const unstaged = statusFiles.filter(f => f.startsWith(' ')).length;
+    const untracked = statusFiles.filter(f => f.startsWith('??')).length;
+    
+    console.log(pc.cyan('Git Status Summary:'));
+    console.log(`  ${pc.green(`${staged} staged changes`)}`);
+    console.log(`  ${pc.yellow(`${unstaged} unstaged changes`)}`);
+    console.log(`  ${pc.red(`${untracked} untracked files`)}`);
+    console.log();
 
-  return typePattern.test(message) && scopePattern.test(message);
-};
-
-const pushToRemote = async () => {
-  const result = await push();
-  return { 
-    success: result.success, 
-    message: result.success ? 'Pushed to remote successfully' : 'Failed to push to remote'
-  };
-};
-
-const commit: CommandHandler = async () => {
-  // Get current branch
-  const currentBranch = await getCurrentBranch();
-  console.log(`Current branch: ${currentBranch}`);
-
-  // Validate branch
-  if (!await validateBranch()) {
-    return {
-      success: false,
-      message: 'Cannot commit directly to protected branch'
+    // Display detailed changes
+    console.log(pc.cyan('Detailed Changes:'));
+    const statusMap = {
+      'A': { text: 'Added', color: pc.green },
+      'M': { text: 'Modified', color: pc.yellow },
+      'D': { text: 'Deleted', color: pc.red },
+      'R': { text: 'Renamed', color: pc.blue },
+      'C': { text: 'Copied', color: pc.blue },
+      'U': { text: 'Updated', color: pc.yellow },
+      '??': { text: 'Untracked', color: pc.red }
     };
-  }
 
-  // Check staged files
-  const stagedFiles = await getStagedFiles();
-  
-  // If no staged files, ask if user wants to stage all
-  if (!stagedFiles.length) {
-    const stageAll = await select({
-      message: 'No staged files found. Would you like to:',
+    for (const file of statusFiles) {
+      const status = file.slice(0, 2).trim();
+      const path = file.slice(3);
+      
+      let statusText = '';
+      let statusColor = pc.red;
+      
+      for (const [code, info] of Object.entries(statusMap)) {
+        if (status.includes(code)) {
+          statusText = info.text;
+          statusColor = info.color;
+          break;
+        }
+      }
+      
+      if (!statusText) statusText = status;
+      const isStaged = !file.startsWith(' ') && !file.startsWith('??');
+      console.log(`  ${statusColor(`[${statusText}]`)} ${path} ${isStaged ? pc.green('(staged)') : pc.yellow('(not staged)')}`);
+    }
+    console.log();
+
+    // Ask if user wants to stage all changes
+    if (unstaged > 0 || untracked > 0) {
+      const stageAll = await confirm({
+        message: 'Stage all changes before committing?',
+        initialValue: false
+      });
+      
+      if (isCancel(stageAll)) {
+        outro('Operation cancelled');
+        return { success: false };
+      }
+      
+      if (stageAll) {
+        const s = spinner();
+        s.start('Staging all changes...');
+        await execa('git', ['add', '.']);
+        s.stop('All changes staged');
+      }
+    }
+
+    // Commit strategy selection
+    const commitStrategy = await select({
+      message: 'Choose a commit strategy:',
       options: [
-        { value: 'stage', label: 'Stage all files' },
-        { value: 'cancel', label: 'Cancel commit' },
-      ],
+        { value: 'single', label: 'Single commit for all changes' },
+        { value: 'folder', label: 'Separate commits by folder' },
+        { value: 'type', label: 'Separate commits by file type' },
+        { value: 'manual', label: 'Manually select files to commit' }
+      ]
     });
 
-    if (isCancel(stageAll) || stageAll === 'cancel') {
-      console.log('Commit cancelled');
-      return {
-        success: false,
-        message: 'Commit cancelled'
-      };
+    if (isCancel(commitStrategy)) {
+      outro('Operation cancelled');
+      return { success: false };
     }
 
-    if (stageAll === 'stage') {
-      // Implementation to stage all files
-      // await stageAllFiles();
-      console.log('Staging all files...');
+    if (commitStrategy === 'single') {
+      // Single commit for all staged files
+      const stagedFiles = statusFiles
+        .filter(file => !file.startsWith(' ') && !file.startsWith('??'))
+        .map(file => file.slice(3));
+      
+      if (stagedFiles.length === 0) {
+        console.log(pc.yellow('No staged files to commit. Please stage files first.'));
+        outro('Commit cancelled');
+        return { success: false };
+      }
+      
+      console.log(`\n${pc.cyan('Committing all staged files:')}`);
+      for (const file of stagedFiles) {
+        console.log(`  ${pc.green('+')} ${file}`);
+      }
+      
+      const s = spinner();
+      s.start('Generating commit message...');
+      const generatedMessage = await useModel(
+        `Generate a concise and descriptive commit message and description for these files: ${stagedFiles.join('\n')}. Format the response as:
+        Commit Message: <message>
+        Description: <description>`
+      );
+      s.stop('Generated commit message');
+
+      const [commitMessage, description] = generatedMessage.split('\nDescription: ');
+      const formattedCommitMessage = commitMessage.replace('Commit Message: ', '');
+
+      console.log(pc.bold(pc.green('Commit Message:')));
+      console.log(`${pc.cyan(`✨ ${formattedCommitMessage}`)}\n`);
+      console.log(pc.bold(pc.green('Description:')));
+      console.log(`${pc.cyan(description)}\n`);
+      
+      const shouldEdit = await confirm({
+        message: 'Use this commit message?',
+        initialValue: true
+      });
+
+      try {
+        if (!shouldEdit) {
+          const editedMessage = await text({
+            message: 'Enter new commit message:',
+            defaultValue: generatedMessage
+          });
+          
+          if (isCancel(editedMessage)) {
+            outro('Commit cancelled');
+            return { success: false };
+          }
+          
+          await execa('git', ['commit', '-m', String(editedMessage)]);
+        } else {
+          await execa('git', ['commit', '-m', String(generatedMessage)]);
+        }
+        console.log(pc.green('Commit successful!'));
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error(pc.red(`Failed to commit changes: ${error.message}`));
+        } else {
+          console.error('An unknown error occurred:', error);
+        }
+        console.error(pc.dim(String(error)));
+        outro('Commit failed');
+        return { success: false };
+      }
+    } else if (commitStrategy === 'folder') {
+      // Group files by folder
+      const folders = new Set<string>();
+      for (const file of statusFiles) {
+        const path = file.slice(3);
+        const folder = path.includes('/') ? path.split('/')[0] : '.';
+        folders.add(folder);
+      }
+
+      for (const folder of folders) {
+        const folderFiles = statusFiles
+          .filter(file => {
+            const path = file.slice(3);
+            return folder === '.' ? !path.includes('/') : path.startsWith(`${folder}/`);
+          })
+          .map(file => file.slice(3));
+        
+        console.log(`\n${pc.cyan('Committing files in')} ${pc.yellow(folder)}`);
+        for (const file of folderFiles) {
+          console.log(`  ${pc.green('+')} ${file}`);
+        }
+        
+        // Add files in this folder - fix path issues by not prepending folder name
+        try {
+          for (const file of folderFiles) {
+            await execa('git', ['add', file]);
+          }
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error(pc.red(`Error adding files: ${error.message}`));
+          } else {
+            console.error('An unknown error occurred:', error);
+          }
+          console.error(pc.dim(String(error)));
+          continue;
+        }
+        
+        const s = spinner();
+        s.start('Generating commit message...');
+        const generatedMessage = await useModel(
+          `Generate a concise and descriptive commit message and description for these changes in ${folder}: ${folderFiles.join('\n')}. Format the response as:
+          Commit Message: <message>
+          Description: <description>`
+        );
+        s.stop('Generated commit message');
+
+        const [commitMessage, description] = generatedMessage.split('\nDescription: ');
+        const formattedCommitMessage = commitMessage.replace('Commit Message: ', '');
+
+        console.log(pc.bold(pc.green('Commit Message:')));
+        console.log(`${pc.cyan(`✨ ${formattedCommitMessage}`)}\n`);
+        console.log(pc.bold(pc.green('Description:')));
+        console.log(`${pc.cyan(description)}\n`);
+        
+        const shouldEdit = await confirm({
+          message: 'Use this commit message?',
+          initialValue: true
+        });
+
+        try {
+          if (!shouldEdit) {
+            const editedMessage = await text({
+              message: 'Enter new commit message:',
+              defaultValue: generatedMessage
+            });
+            
+            if (isCancel(editedMessage)) {
+              console.log(pc.yellow('Skipping commit for this folder'));
+              return { success: false };
+            }
+            
+            await execa('git', ['commit', '-m', String(editedMessage)]);
+          } else {
+            await execa('git', ['commit', '-m', String(generatedMessage)]);
+          }
+          console.log(pc.green(`Successfully committed changes in ${folder}`));
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error(pc.red(`Failed to commit changes: ${error.message}`));
+          } else {
+            console.error('An unknown error occurred:', error);
+          }
+          console.error(pc.dim(String(error)));
+        }
+      }
+    } else if (commitStrategy === 'type') {
+      // Group by file extension
+      const extensions = new Set<string>();
+      for (const file of statusFiles) {
+        const path = file.slice(3);
+        const ext = path.includes('.') ? path.split('.').pop() || 'no-ext' : 'no-ext';
+        extensions.add(ext);
+      }
+
+      for (const ext of extensions) {
+        const extFiles = statusFiles
+          .filter(file => {
+            const path = file.slice(3);
+            return path.endsWith(`.${ext}`) || (ext === 'no-ext' && !path.includes('.'));
+          })
+          .map(file => file.slice(3));
+        
+        console.log(`\n${pc.cyan('Committing')} ${pc.yellow(ext)} ${pc.cyan('files')}`);
+        for (const file of extFiles) {
+          console.log(`  ${pc.green('+')} ${file}`);
+        }
+        
+        // Add files with this extension - fix path issues by not modifying paths
+        try {
+          for (const file of extFiles) {
+            await execa('git', ['add', file]);
+          }
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error(pc.red(`Error adding files: ${error.message}`));
+          } else {
+            console.error('An unknown error occurred:', error);
+          }
+          console.error(pc.dim(String(error)));
+          continue;
+        }
+        
+        const s = spinner();
+        s.start('Generating commit message...');
+        const generatedMessage = await useModel(
+          `Generate a concise and descriptive commit message and description for these ${ext} files: ${extFiles.join('\n')}. Format the response as:
+          Commit Message: <message>
+          Description: <description>`
+        );
+        s.stop('Generated commit message');
+
+        const [commitMessage, description] = generatedMessage.split('\nDescription: ');
+        const formattedCommitMessage = commitMessage.replace('Commit Message: ', '');
+
+        console.log(pc.bold(pc.green('Commit Message:')));
+        console.log(`${pc.cyan(`✨ ${formattedCommitMessage}`)}\n`);
+        console.log(pc.bold(pc.green('Description:')));
+        console.log(`${pc.cyan(description)}\n`);
+        
+        const shouldEdit = await confirm({
+          message: 'Use this commit message?',
+          initialValue: true
+        });
+
+        try {
+          if (!shouldEdit) {
+            const editedMessage = await text({
+              message: 'Enter new commit message:',
+              defaultValue: generatedMessage
+            });
+            
+            if (isCancel(editedMessage)) {
+              console.log(pc.yellow('Skipping commit for this file type'));
+              return { success: false };
+            }
+            
+            await execa('git', ['commit', '-m', String(editedMessage)]);
+          } else {
+            await execa('git', ['commit', '-m', String(generatedMessage)]);
+          }
+          console.log(pc.green(`Successfully committed ${ext} files`));
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error(pc.red(`Failed to commit changes: ${error.message}`));
+          } else {
+            console.error('An unknown error occurred:', error);
+          }
+          console.error(pc.dim(String(error)));
+        }
+      }
+    } else if (commitStrategy === 'manual') {
+      // Let user select files manually
+      const fileOptions = statusFiles.map(file => {
+        const path = file.slice(3);
+        const status = file.slice(0, 2).trim();
+        let statusText = 'Changed';
+        
+        for (const [code, info] of Object.entries(statusMap)) {
+          if (status.includes(code)) {
+            statusText = info.text;
+            break;
+          }
+        }
+        
+        return { 
+          value: path, 
+          label: `${path} (${statusText})` 
+        };
+      });
+
+      const selectedFiles = await multiselect({
+        message: 'Select files to commit:',
+        options: fileOptions,
+      });
+
+      if (isCancel(selectedFiles) || !selectedFiles.length) {
+        outro('Operation cancelled or no files selected');
+        return { success: false };
+      }
+      
+      console.log(`\n${pc.cyan('Committing selected files:')}`);
+      for (const file of selectedFiles as string[]) {
+        console.log(`  ${pc.green('+')} ${file}`);
+      }
+      
+      // Add selected files - fix path issues by not modifying paths
+      try {
+        for (const file of selectedFiles as string[]) {
+          await execa('git', ['add', file]);
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error(pc.red(`Error adding files: ${error.message}`));
+        } else {
+          console.error('An unknown error occurred:', error);
+        }
+        console.error(pc.dim(String(error)));
+        outro('Commit failed');
+        return { success: false };
+      }
+      
+      const s = spinner();
+      s.start('Generating commit message...');
+      const generatedMessage = await useModel(
+        `Generate a concise and descriptive commit message and description for these selected files: ${selectedFiles.join('\n')}. Format the response as:
+        Commit Message: <message>
+        Description: <description>`
+      );
+      s.stop('Generated commit message');
+
+      const [commitMessage, description] = generatedMessage.split('\nDescription: ');
+      const formattedCommitMessage = commitMessage.replace('Commit Message: ', '');
+
+      console.log(pc.bold(pc.green('Commit Message:')));
+      console.log(`${pc.cyan(`✨ ${formattedCommitMessage}`)}\n`);
+      console.log(pc.bold(pc.green('Description:')));
+      console.log(`${pc.cyan(description)}\n`);
+      
+      const shouldEdit = await confirm({
+        message: 'Use this commit message?',
+        initialValue: true
+      });
+
+      try {
+        if (!shouldEdit) {
+          const editedMessage = await text({
+            message: 'Enter new commit message:',
+            defaultValue: generatedMessage
+          });
+          
+          if (isCancel(editedMessage)) {
+            console.log(pc.yellow('Skipping commit for this file type'));
+            return { success: false };
+          }
+          
+          await execa('git', ['commit', '-m', String(editedMessage)]);
+        } else {
+          await execa('git', ['commit', '-m', String(generatedMessage)]);
+        }
+        console.log(pc.green('Commit successful!'));
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error(pc.red(`Failed to commit changes: ${error.message}`));
+        } else {
+          console.error('An unknown error occurred:', error);
+        }
+        console.error(pc.dim(String(error)));
+        outro('Commit failed');
+        return { success: false };
+      }
     }
-  } else {
-    console.log(`Staged files: ${stagedFiles.join(', ')}`);
-  }
-
-  // Run pre-commit hooks
-  if (config.git.hooks.preCommit.enable) {
-    for (const command of config.git.hooks.preCommit.commands) {
-      // Implementation of command execution
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(pc.red(`An error occurred: ${error.message}`));
+    } else {
+      console.error('An unknown error occurred:', error);
     }
+    console.error(pc.dim(String(error)));
+    outro('Operation failed');
+    return { success: false };
   }
 
-  // Generate AI commit message
-  const message = await generateCommitMessage(`Generate commit message for these changes: ${stagedFiles.join(', ')}`);
-
-  // Validate commit message
-  if (config.commit.validation.message) {
-    const isValid = validateCommitMessage(message);
-    if (!isValid) {
-      return {
-        success: false,
-        message: 'Invalid commit message'
-      };
-    }
-  }
-
-  // Auto stage changes
-  if (config.commit.automation.autoStage) {
-    // Implementation of command execution
-  }
-
-  // Create commit
-  await createCommit(message);
-  console.log(`Commit created: ${message}`);
-
-  // Auto push changes
-  if (config.commit.automation.autoPush) {
-    console.log('Auto-pushing to remote...');
-    await pushToRemote();
-  } else {
-    const shouldPush = await select({
-      message: 'Would you like to push to remote?',
-      options: [
-        { value: 'yes', label: 'Yes, push now' },
-        { value: 'no', label: 'No, I\'ll push later' },
-      ],
-    });
-
-    if (!isCancel(shouldPush) && shouldPush === 'yes') {
-      await pushToRemote();
-    }
-  }
-
-  return {
-    success: true,
-    message: `Commit created with message: ${message}`
-  };
+  outro('Operation completed');
+  return { success: true };
 };
 
-export default commit;
+export default handler;
