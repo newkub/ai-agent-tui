@@ -1,0 +1,22 @@
+{
+  "name": "@newkub/auth",
+  "version": "1.0.0",
+  "description": "Authentication utilities for the CLI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "start": "bun run ./src/test/start.ts",
+    "dev": "bun --watch run ./src/index.ts"
+  },
+  "dependencies": {
+    "@poppinss/cliui": "^6.4.3",
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.8.2"
+  }
+}
