@@ -5,6 +5,10 @@ export interface AIProviderConfig<TOptions extends Record<string, unknown> = Rec
   defaultModel?: string;
   maxTokens?: number;
   options?: TOptions;
+  rateLimit?: {
+    requestsPerMinute: number;
+    burstLimit: number;
+  };
 }
 
 export interface OpenAIConfig extends AIProviderConfig {}
@@ -44,7 +48,7 @@ export interface AiConfig {
   };
 }
 
-export function defineConfig(config: AiConfig): AiConfig {
+export function defineConfig<T extends AiConfig>(config: T): T {
   return config;
 }
 

@@ -1,54 +1,42 @@
-import { defineConfig, type AiConfig } from './src/config/index';
-
-const providers = {
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY || '',
-    defaultModel: 'gpt-4',
-    maxTokens: 1000,
-    options: {},
-  },
-  anthropic: {
-    apiKey: process.env.ANTHROPIC_API_KEY || '',
-    defaultModel: 'claude-3-opus',
-    maxTokens: 1000,
-    options: {},
-  },
-};
-
-const tools = {
-  textGen: {
-    defaultProvider: 'openai',
-  },
-  imageGen: {
-    defaultProvider: 'stabilityai',
-  },
-};
-
-export const rateLimiting = {
-  requestsPerMinute: 60,
-  burstLimit: 10,
-};
-
-export const logging = {
-  level: 'info',
-  format: 'json',
-};
-
-export const security = {
-  encryptionKey: process.env.ENCRYPTION_KEY || '',
-  tokenExpiration: '1h',
-};
-
-export { providers, tools };
+import { defineConfig } from './src/config/index';
 
 export default defineConfig({
-  providers,
-  tools,
-  rateLimiting,
-  logging,
-  security,
+  providers: {
+    openai: {
+      apiKey: process.env.OPENAI_API_KEY || '',
+      defaultModel: 'gpt-4',
+      maxTokens: 1000,
+      options: {},
+      rateLimit: {
+        requestsPerMinute: 30,
+        burstLimit: 5
+      }
+    },
+    anthropic: {
+      apiKey: process.env.ANTHROPIC_API_KEY || '',
+      defaultModel: 'claude-3-opus',
+      maxTokens: 1000,
+      options: {},
+      rateLimit: {
+        requestsPerMinute: 30,
+        burstLimit: 5
+      }
+    }
+  },
+  tools: {
+    textGen: {
+      defaultProvider: 'openai',
+    },
+    imageGen: {
+      defaultProvider: 'stabilityai',
+    }
+  },
+  rateLimiting: {
+    requestsPerMinute: 60,
+    burstLimit: 10
+  },
   caching: {
     enabled: true,
-    ttl: 3600,
-  },
-} satisfies AiConfig);
+    ttl: 3600
+  }
+});
