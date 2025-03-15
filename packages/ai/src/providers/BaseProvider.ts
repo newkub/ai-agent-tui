@@ -1,10 +1,15 @@
 import type { CompletionOptions, CompletionResponse, ImageGenerationOptions, ImageGenerationResponse, AIClient } from '../types/providers';
 import { AIError } from '../types/providers';
-import { mapMessages } from '../utils/provider';
+import { mapMessages } from '../utils';
 
-export const validateApiKey = (apiKey: string | undefined, providerName: string): void => {
-  if (!apiKey) {
-    throw new AIError(`${providerName} API key is required`);
+export interface BaseProviderConfig {
+  apiKey: string;
+  providerName: string;
+}
+
+export const validateApiKey = (config: BaseProviderConfig): void => {
+  if (!config.apiKey) {
+    throw new AIError(`${config.providerName} API key is required`);
   }
 };
 
@@ -12,10 +17,10 @@ export abstract class BaseProvider implements AIClient {
   protected readonly apiKey: string;
   protected readonly providerName: string;
 
-  constructor(apiKey: string, providerName: string) {
-    this.apiKey = apiKey;
-    this.providerName = providerName;
-    validateApiKey(this.apiKey, this.providerName);
+  constructor(config: BaseProviderConfig) {
+    this.apiKey = config.apiKey;
+    this.providerName = config.providerName;
+    validateApiKey(config);
   }
 
   protected handleError(error: unknown, context: string): never {

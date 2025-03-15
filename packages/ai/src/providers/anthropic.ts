@@ -1,14 +1,19 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { BaseProvider } from './BaseProvider';
-import { mapMessages } from '../utils/provider';
+import { handleProviderError, mapMessages, defaultProviderConfig } from '../utils';
 import type { AIClient, CompletionOptions, CompletionResponse, ImageGenerationOptions, ImageGenerationResponse } from '../types/providers';
 
 export class AnthropicProvider extends BaseProvider {
   private anthropic: Anthropic;
 
   constructor() {
-    super(process.env.ANTHROPIC_API_KEY || '', 'Anthropic');
-    this.anthropic = new Anthropic({ apiKey: this.apiKey });
+    super({
+      apiKey: process.env.ANTHROPIC_API_KEY || '',
+      providerName: 'Anthropic'
+    });
+    this.anthropic = new Anthropic({
+      apiKey: this.apiKey
+    });
   }
 
   chat = {
@@ -18,22 +23,23 @@ export class AnthropicProvider extends BaseProvider {
           const messages = mapMessages(options.messages);
           const response = await this.anthropic.completions.create({
             model: options.model,
-            prompt: messages.map(msg => `${msg.role}: ${msg.content}`).join('\n'),
-            max_tokens_to_sample: options.max_tokens ?? 100,
-            temperature: options.temperature ?? 0.7,
-            top_p: options.top_p ?? 1,
+            prompt: messages,
+            max_tokens_to_sample: options.max_tokens ?? defaultProviderConfig.maxTokens,
+            temperature: options.temperature ?? defaultProviderConfig.temperature,
+            top_p: options.top_p ?? defaultProviderConfig.topP
           });
 
           return {
             id: response.completion,
             choices: [{
               message: {
-                content: response.completion
+                content: response.completion || ''
               }
             }]
           };
         } catch (error) {
-          this.handleError(error, 'chat completion');
+          handleProviderError(error, 'chat completion', this.providerName);
+          throw error;
         }
       }
     }
@@ -42,9 +48,10 @@ export class AnthropicProvider extends BaseProvider {
   images = {
     generate: async (_options: ImageGenerationOptions): Promise<ImageGenerationResponse> => {
       try {
-        throw new Error('Image generation not supported by Anthropic');
+        throw new Error('Image generation is not supported by Anthropic');
       } catch (error) {
-        this.handleError(error, 'image generation');
+        handleProviderError(error, 'image generation', this.providerName);
+        throw error;
       }
     }
   };

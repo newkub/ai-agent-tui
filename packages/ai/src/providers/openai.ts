@@ -1,18 +1,18 @@
 import OpenAI from 'openai';
 import { BaseProvider } from './BaseProvider';
-import type { AIClient, CompletionOptions, CompletionResponse, ImageGenerationOptions, ImageGenerationResponse, ImageGenerationResult } from '../types/providers';
-import { AIError } from '../types/providers';
+import { handleProviderError, defaultProviderConfig } from '../utils';
+import type { AIClient, CompletionOptions, CompletionResponse, ImageGenerationOptions, ImageGenerationResponse } from '../types/providers';
 
 export class OpenAIProvider extends BaseProvider {
   private openai: OpenAI;
 
-  constructor(config: { apiKey: string; organizationId?: string; timeout?: number; maxRetries?: number }) {
-    super(config.apiKey, 'OpenAI');
+  constructor() {
+    super({
+      apiKey: process.env.OPENAI_API_KEY || '',
+      providerName: 'OpenAI'
+    });
     this.openai = new OpenAI({
-      apiKey: this.apiKey,
-      organization: config.organizationId,
-      timeout: config.timeout,
-      maxRetries: config.maxRetries
+      apiKey: this.apiKey
     });
   }
 
@@ -20,27 +20,29 @@ export class OpenAIProvider extends BaseProvider {
     completions: {
       create: async (options: CompletionOptions): Promise<CompletionResponse> => {
         try {
+          const messages = options.messages.map(message => ({
+            role: message.role,
+            content: message.content
+          }));
           const response = await this.openai.chat.completions.create({
             model: options.model,
-            messages: options.messages,
-            temperature: options.temperature ?? 0.7,
-            max_tokens: options.max_tokens ?? 100,
-            top_p: options.top_p ?? 1,
-            frequency_penalty: options.frequency_penalty ?? 0,
-            presence_penalty: options.presence_penalty ?? 0,
-            stop: options.stop
+            messages,
+            max_tokens: options.max_tokens ?? defaultProviderConfig.maxTokens,
+            temperature: options.temperature ?? defaultProviderConfig.temperature,
+            top_p: options.top_p ?? defaultProviderConfig.topP
           });
 
           return {
             id: response.id,
-            choices: response.choices.map(choice => ({
+            choices: response.choices.map((choice: OpenAI.ChatCompletion.Choice) => ({
               message: {
                 content: choice.message.content || ''
               }
             }))
           };
         } catch (error) {
-          this.handleError(error, 'chat completion');
+          handleProviderError(error, 'chat completion', this.providerName);
+          throw error;
         }
       }
     }
@@ -49,74 +51,26 @@ export class OpenAIProvider extends BaseProvider {
   images = {
     generate: async (options: ImageGenerationOptions): Promise<ImageGenerationResponse> => {
       try {
-        if (!this.openai.images) throw new Error('Images API not available');
-
         const response = await this.openai.images.generate({
           model: options.model,
           prompt: options.prompt,
-          n: options.n ?? 1,
-          size: options.size ?? '1024x1024'
+          n: options.n ?? defaultProviderConfig.imageCount,
+          size: (options.size ?? defaultProviderConfig.imageSize) as '1024x1024' | '256x256' | '512x512' | '1792x1024' | '1024x1792'
         });
 
         return {
-          data: response.data.map(image => ({
+          data: response.data.map((image: OpenAI.Image) => ({
             url: image.url || ''
           }))
         };
       } catch (error) {
-        this.handleError(error, 'image generation');
+        handleProviderError(error, 'image generation', this.providerName);
+        throw error;
       }
     }
   };
 }
 
-export const createOpenAIClient = (config: { apiKey: string; organizationId?: string; timeout?: number; maxRetries?: number }): AIClient => {
-  return new OpenAIProvider(config);
-};
-
-export const textgen = async (client: AIClient, prompt: string): Promise<string> => {
-  const completion = await client.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 100,
-    temperature: 0.7
-  });
-
-  return completion.choices[0]?.message?.content?.trim() || '';
-};
-
-export const imagegen = async (client: AIClient, prompt: string): Promise<ImageGenerationResult> => {
-  if (!client.images?.generate) throw new Error('Image generation not supported');
-  const response = await client.images.generate({
-    model: 'dall-e-3',
-    prompt: prompt,
-    n: 1,
-    size: '1024x1024'
-  });
-
-  const imageUrl = response.data[0]?.url;
-  if (!imageUrl) throw new AIError('No image URL returned from OpenAI');
-
-  return {
-    url: imageUrl,
-    width: 1024,
-    height: 1024,
-    format: 'png'
-  };
-};
-
-export const client = (client: AIClient) => {
-  return {
-    completions: client.completions?.create ? {
-      create: client.completions.create
-    } : null,
-    images: client.images?.generate ? {
-      generate: client.images.generate
-    } : null,
-    chat: client.chat?.completions?.create ? {
-      completions: {
-        create: client.chat.completions.create
-      }
-    } : null
-  };
+export const createOpenAIClient = (): AIClient => {
+  return new OpenAIProvider();
 };
