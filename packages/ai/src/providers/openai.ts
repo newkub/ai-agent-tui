@@ -1,66 +1,122 @@
-import type { AIProvider, ImageGenerationResult } from '../types/provider-params';
 import OpenAI from 'openai';
+import { BaseProvider } from './BaseProvider';
+import type { AIClient, CompletionOptions, CompletionResponse, ImageGenerationOptions, ImageGenerationResponse, ImageGenerationResult } from '../types/providers';
+import { AIError } from '../types/providers';
 
-export class OpenAIProvider implements AIProvider {
+export class OpenAIProvider extends BaseProvider {
   private openai: OpenAI;
 
-  constructor() {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key is required');
-    }
+  constructor(config: { apiKey: string; organizationId?: string; timeout?: number; maxRetries?: number }) {
+    super(config.apiKey, 'OpenAI');
     this.openai = new OpenAI({
-      apiKey: apiKey
+      apiKey: this.apiKey,
+      organization: config.organizationId,
+      timeout: config.timeout,
+      maxRetries: config.maxRetries
     });
   }
-  async textgen(prompt: string): Promise<string> {
-    try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{
-          role: 'user',
-          content: prompt
-        }],
-        max_tokens: 100,
-        temperature: 0.7,
-      });
 
-      if (!completion.choices?.[0]?.message?.content) {
-        throw new Error('Invalid response format from OpenAI API');
+  chat = {
+    completions: {
+      create: async (options: CompletionOptions): Promise<CompletionResponse> => {
+        try {
+          const response = await this.openai.chat.completions.create({
+            model: options.model,
+            messages: options.messages,
+            temperature: options.temperature ?? 0.7,
+            max_tokens: options.max_tokens ?? 100,
+            top_p: options.top_p ?? 1,
+            frequency_penalty: options.frequency_penalty ?? 0,
+            presence_penalty: options.presence_penalty ?? 0,
+            stop: options.stop
+          });
+
+          return {
+            id: response.id,
+            choices: response.choices.map(choice => ({
+              message: {
+                content: choice.message.content || ''
+              }
+            }))
+          };
+        } catch (error) {
+          this.handleError(error, 'chat completion');
+        }
       }
-      return completion.choices[0].message.content.trim();
-    } catch (error) {
-      console.error('OpenAI API Error:', error);
-      throw new Error('Failed to generate text');
     }
-  }
+  };
 
-  async imagegen(prompt: string): Promise<ImageGenerationResult> {
-    try {
-      const response = await this.openai.images.generate({
-        model: 'dall-e-3',
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-        response_format: 'url'
-      });
+  images = {
+    generate: async (options: ImageGenerationOptions): Promise<ImageGenerationResponse> => {
+      try {
+        if (!this.openai.images) throw new Error('Images API not available');
 
-      const imageUrl = response.data[0].url;
-      if (!imageUrl) {
-        throw new Error('No image URL returned from OpenAI');
+        const response = await this.openai.images.generate({
+          model: options.model,
+          prompt: options.prompt,
+          n: options.n ?? 1,
+          size: options.size ?? '1024x1024'
+        });
+
+        return {
+          data: response.data.map(image => ({
+            url: image.url || ''
+          }))
+        };
+      } catch (error) {
+        this.handleError(error, 'image generation');
       }
-
-      return {
-        url: imageUrl,
-        width: 1024,
-        height: 1024,
-        format: 'png'
-      };
-    } catch (error) {
-      console.error('OpenAI Image Generation Error:', error);
-      throw new Error('Failed to generate image');
     }
-  }
+  };
 }
-export { OpenAI };
 
+export const createOpenAIClient = (config: { apiKey: string; organizationId?: string; timeout?: number; maxRetries?: number }): AIClient => {
+  return new OpenAIProvider(config);
+};
+
+export const textgen = async (client: AIClient, prompt: string): Promise<string> => {
+  const completion = await client.chat.completions.create({
+    model: 'gpt-3.5-turbo',
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 100,
+    temperature: 0.7
+  });
+
+  return completion.choices[0]?.message?.content?.trim() || '';
+};
+
+export const imagegen = async (client: AIClient, prompt: string): Promise<ImageGenerationResult> => {
+  if (!client.images?.generate) throw new Error('Image generation not supported');
+  const response = await client.images.generate({
+    model: 'dall-e-3',
+    prompt: prompt,
+    n: 1,
+    size: '1024x1024'
+  });
+
+  const imageUrl = response.data[0]?.url;
+  if (!imageUrl) throw new AIError('No image URL returned from OpenAI');
+
+  return {
+    url: imageUrl,
+    width: 1024,
+    height: 1024,
+    format: 'png'
+  };
+};
+
+export const client = (client: AIClient) => {
+  return {
+    completions: client.completions?.create ? {
+      create: client.completions.create
+    } : null,
+    images: client.images?.generate ? {
+      generate: client.images.generate
+    } : null,
+    chat: client.chat?.completions?.create ? {
+      completions: {
+        create: client.chat.completions.create
+      }
+    } : null
+  };
+};

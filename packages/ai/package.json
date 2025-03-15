@@ -6,6 +6,7 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "start:cli": "bun run examples/cli/index.ts",
+    "dev": "bun run src/index.ts --watch --noEmit",
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "prepublishOnly": "bun run build && bun run start",
     "release": "release-it"
