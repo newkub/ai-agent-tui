@@ -25,3 +25,6 @@ logs/
 .DS_Store
 # Turborepo
 .turbo
+
+
+.windsurfrules
