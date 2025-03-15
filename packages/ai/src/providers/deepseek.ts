@@ -1,82 +1,112 @@
 import { BaseProvider } from './BaseProvider';
-import { handleProviderError, defaultProviderConfig } from '../utils';
+import { handleProviderError, mapMessages, defaultProviderConfig, logMetrics, withRetry, validateCompletionOptions } from '../utils';
 import type { AIClient, CompletionOptions, CompletionResponse, ImageGenerationOptions, ImageGenerationResponse } from '../types/providers';
-import type OpenAI from 'openai';
+
+interface DeepseekCompletionOptions extends CompletionOptions {
+  max_tokens_to_sample?: number;
+  stop_sequences?: string[];
+}
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
 
 export class DeepseekProvider extends BaseProvider {
-  private deepseek: {
-    chat: {
-      completions: {
-        create: (options: OpenAI.ChatCompletionCreateParams) => Promise<OpenAI.ChatCompletion>;
-      };
-    };
-    images: {
-      generate: (options: OpenAI.ImageGenerateParams) => Promise<OpenAI.ImagesResponse>;
-    };
-  };
+  private cache: Map<string, CompletionResponse>;
+  public config: typeof defaultProviderConfig;
 
-  constructor() {
+  constructor(config?: Partial<typeof defaultProviderConfig>) {
     super({
+      ...defaultProviderConfig,
+      ...config,
       apiKey: process.env.DEEPSEEK_API_KEY || '',
       providerName: 'Deepseek'
     });
-    this.deepseek = {
-      chat: {
-        completions: {
-          create: async (options: OpenAI.ChatCompletionCreateParams) => {
-            return {
-              id: '',
-              choices: [{
-                message: {
-                  content: '',
-                  role: 'assistant',
-                  refusal: null
-                },
-                finish_reason: 'stop',
-                index: 0,
-                logprobs: null
-              }],
-              created: Date.now(),
-              model: options.model,
-              object: 'chat.completion'
-            };
-          }
-        }
-      },
-      images: {
-        generate: async () => {
-          throw new Error('Image generation is not supported by Deepseek');
-        }
-      }
+    this.config = {
+      ...defaultProviderConfig,
+      ...config
     };
+    this.cache = new Map();
+  }
+
+  private logRequest(context: string, payload: Record<string, unknown>) {
+    console.log(`[${this.providerName}] ${context} Request:`, payload);
+  }
+
+  private logResponse(context: string, response: Record<string, unknown>, duration: number) {
+    console.log(`[${this.providerName}] ${context} Response (${duration}ms):`, response);
   }
 
   chat = {
     completions: {
-      create: async (options: CompletionOptions): Promise<CompletionResponse> => {
+      create: async (options: DeepseekCompletionOptions): Promise<CompletionResponse> => {
+        validateCompletionOptions(options);
+
+        const cacheKey = JSON.stringify(options);
+        const cachedResponse = this.cache.get(cacheKey);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        const startTime = Date.now();
         try {
-          const messages = options.messages.map(message => ({
-            role: message.role,
-            content: message.content
-          }));
-          const response = await this.deepseek.chat.completions.create({
+          const messages = mapMessages(options.messages);
+          this.logRequest('Chat Completion', {
             model: options.model,
-            messages,
-            max_tokens: options.max_tokens ?? defaultProviderConfig.maxTokens,
-            temperature: options.temperature ?? defaultProviderConfig.temperature,
-            top_p: options.top_p ?? defaultProviderConfig.topP
+            prompt: messages
           });
 
-          return {
-            id: response.id,
-            choices: response.choices.map((choice: OpenAI.ChatCompletion.Choice) => ({
+          const response = await withRetry(
+            () => fetch('https://api.deepseek.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+              },
+              body: JSON.stringify({
+                model: options.model,
+                messages: messages,
+                max_tokens: options.max_tokens ?? this.config.maxTokens,
+                temperature: options.temperature ?? this.config.temperature,
+                top_p: options.top_p ?? this.config.topP,
+                stop_sequences: options.stop_sequences
+              })
+            }),
+            MAX_RETRIES,
+            RETRY_DELAY_MS
+          );
+
+          const data = await response.json();
+          const duration = Date.now() - startTime;
+          this.logResponse('Chat Completion', data, duration);
+          logMetrics(duration, true);
+
+          const result: CompletionResponse = {
+            id: data.id,
+            choices: [{
               message: {
-                content: choice.message.content || ''
+                content: data.choices[0].message.content || ''
               }
-            }))
+            }]
           };
+
+          this.cache.set(cacheKey, result);
+          return result;
         } catch (error) {
-          handleProviderError(error, 'chat completion', this.providerName);
+          const duration = Date.now() - startTime;
+          logMetrics(duration, false);
+
+          if (error instanceof Error && 'status' in error && typeof error.status === 'number' && error.status >= 400) {
+            switch (error.status) {
+              case 429:
+                throw new Error('Rate limit exceeded. Please try again later.');
+              case 401:
+                throw new Error('Invalid API key. Please check your configuration.');
+              default:
+                handleProviderError(error, 'chat completion', this.providerName);
+            }
+          } else {
+            handleProviderError(error, 'chat completion', this.providerName);
+          }
           throw error;
         }
       }
@@ -95,6 +125,6 @@ export class DeepseekProvider extends BaseProvider {
   };
 }
 
-export const createDeepseekClient = (): AIClient => {
-  return new DeepseekProvider();
+export const createDeepseekClient = (config?: Partial<typeof defaultProviderConfig>): AIClient => {
+  return new DeepseekProvider(config);
 };
